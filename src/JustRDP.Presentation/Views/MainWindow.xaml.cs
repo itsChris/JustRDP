@@ -21,12 +21,21 @@ public partial class MainWindow : Window
         DataContext = viewModel;
         _settings = settings;
         Closing += MainWindow_Closing;
+        StateChanged += MainWindow_StateChanged;
     }
 
     private async void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
     {
         await RestoreWindowStateAsync();
         await ViewModel.InitializeAsync();
+    }
+
+    private void MainWindow_StateChanged(object? sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+            ViewModel.PauseMonitoring();
+        else
+            ViewModel.ResumeMonitoring();
     }
 
     private async void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)

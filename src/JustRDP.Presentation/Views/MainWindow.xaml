@@ -29,6 +29,7 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
         <converters:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
         <converters:InverseBoolConverter x:Key="InverseBool" />
+        <converters:AvailabilityStatusToBrushConverter x:Key="AvailabilityToBrush" />
     </Window.Resources>
 
     <Window.InputBindings>
@@ -156,6 +157,18 @@
                             <TextBlock Text="Scan" Margin="4,0,0,0" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
+
+                    <!-- Availability Monitor -->
+                    <ToggleButton Style="{StaticResource MaterialDesignToolForegroundButton}"
+                                  ToolTip="Toggle Availability Monitor"
+                                  IsChecked="{Binding IsMonitoringEnabled}"
+                                  Command="{Binding ToggleMonitoringCommand}"
+                                  Padding="8,4" Height="32">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="HeartPulse" VerticalAlignment="Center" />
+                            <TextBlock Text="Monitor" Margin="4,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
                 </StackPanel>
             </DockPanel>
         </materialDesign:ColorZone>
@@ -222,6 +235,10 @@
                                             <CheckBox IsChecked="{Binding IsChecked}"
                                                       VerticalAlignment="Center" Margin="0,0,4,0"
                                                       Visibility="{Binding IsConnection, Converter={StaticResource BoolToVis}}" />
+                                            <Ellipse Width="8" Height="8" Margin="0,0,4,0"
+                                                     VerticalAlignment="Center"
+                                                     Fill="{Binding AvailabilityStatus, Converter={StaticResource AvailabilityToBrush}}"
+                                                     Visibility="{Binding DataContext.IsMonitoringEnabled, Source={x:Reference ThisWindow}, Converter={StaticResource BoolToVis}}" />
                                             <materialDesign:PackIcon
                                                 Kind="{Binding EntryType, Converter={StaticResource EntryTypeToIcon}}"
                                                 VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18" />

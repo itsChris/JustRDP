@@ -6,6 +6,7 @@ using JustRDP.Infrastructure.Persistence;
 using JustRDP.Infrastructure.Persistence.Repositories;
 using JustRDP.Infrastructure.Security;
 using JustRDP.Infrastructure.Services;
+using JustRDP.Presentation.Services;
 using JustRDP.Presentation.Themes;
 using JustRDP.Presentation.ViewModels;
 using JustRDP.Presentation.Views;
@@ -47,6 +48,10 @@ public partial class App : System.Windows.Application
 
                 // Network scanning
                 services.AddTransient<INetworkScanner, NetworkScanner>();
+
+                // Availability monitoring
+                services.AddTransient<IAvailabilityChecker, AvailabilityChecker>();
+                services.AddScoped<AvailabilityMonitorService>();
 
                 // ViewModels
                 services.AddTransient<MainWindowViewModel>();

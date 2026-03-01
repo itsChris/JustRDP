@@ -37,6 +37,9 @@ public partial class TreeEntryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isVisible = true;
 
+    [ObservableProperty]
+    private AvailabilityStatus _availabilityStatus = AvailabilityStatus.Unknown;
+
     public Guid Id { get; }
     public Guid? ParentId { get; set; }
     public int SortOrder { get; set; }

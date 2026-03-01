@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using JustRDP.Application.Services;
 using JustRDP.Domain.Entities;
 using JustRDP.Domain.Interfaces;
+using JustRDP.Presentation.Services;
 using JustRDP.Presentation.Themes;
 using JustRDP.Presentation.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ICredentialEncryptor _encryptor;
     private readonly ThemeManager _themeManager;
     private readonly IServiceProvider _serviceProvider;
+    private readonly AvailabilityMonitorService _availabilityMonitor;
     private NetworkScanWindow? _scanWindow;
     private IServiceScope? _scanScope;
 
@@ -56,6 +58,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasCheckedEntries;
 
+    [ObservableProperty]
+    private bool _isMonitoringEnabled;
+
     public bool HasNoTabs => OpenTabCount == 0;
     public bool HasNoSelection => SelectedEntry is null;
 
@@ -75,7 +80,8 @@ public partial class MainWindowViewModel : ObservableObject
         ImportExportService importExportService,
         ICredentialEncryptor encryptor,
         ThemeManager themeManager,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        AvailabilityMonitorService availabilityMonitor)
     {
         _logger = logger;
         _treeService = treeService;
@@ -84,6 +90,8 @@ public partial class MainWindowViewModel : ObservableObject
         _encryptor = encryptor;
         _themeManager = themeManager;
         _serviceProvider = serviceProvider;
+        _availabilityMonitor = availabilityMonitor;
+        _availabilityMonitor.SummaryChanged += OnAvailabilitySummaryChanged;
         TreeVM = new TreeViewModel(treeService, OnConnectionDoubleClick, OnSelectionChanged, OpenConnectionAsync,
             () => HasCheckedEntries = TreeVM!.GetCheckedConnections().Count > 0);
     }
@@ -92,6 +100,8 @@ public partial class MainWindowViewModel : ObservableObject
     {
         IsDarkTheme = await _themeManager.LoadThemeAsync();
         await TreeVM.LoadTreeAsync();
+        IsMonitoringEnabled = await _availabilityMonitor.LoadEnabledStateAsync();
+        _availabilityMonitor.Initialize(TreeVM);
         UpdateStatus();
     }
 
@@ -379,11 +389,29 @@ public partial class MainWindowViewModel : ObservableObject
         StatusText = $"Exported to {System.IO.Path.GetFileName(dialog.FileName)}";
     }
 
+    [RelayCommand]
+    private async Task ToggleMonitoring()
+    {
+        // IsMonitoringEnabled already toggled by ToggleButton binding
+        await _availabilityMonitor.SetEnabledAsync(IsMonitoringEnabled, TreeVM);
+        UpdateStatus();
+    }
+
+    public void PauseMonitoring() => _availabilityMonitor.Pause();
+    public void ResumeMonitoring() => _availabilityMonitor.Resume();
+
+    private void OnAvailabilitySummaryChanged() => UpdateStatus();
+
     private void UpdateStatus()
     {
         var count = TreeVM.HasEntries ? $"{TreeVM.EntryCount} entries" : "No entries";
-        StatusText = OpenTabCount > 0
+        var status = OpenTabCount > 0
             ? $"{count} | {OpenTabCount} connection(s) open"
             : count;
+
+        if (IsMonitoringEnabled && _availabilityMonitor.TotalChecked > 0)
+            status += $" | {_availabilityMonitor.AvailableCount}/{_availabilityMonitor.TotalChecked} available";
+
+        StatusText = status;
     }
 }
