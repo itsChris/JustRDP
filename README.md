@@ -47,7 +47,7 @@ Each connection supports the full range of RDP options:
 ### Build & Run
 
 ```powershell
-git clone https://github.com/your-username/JustRDP.git
+git clone https://github.com/itsChris/JustRDP.git
 cd JustRDP
 dotnet run --project src/JustRDP.Presentation
 ```
