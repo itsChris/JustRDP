@@ -47,46 +47,95 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="8">
+        <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="6,4">
             <DockPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
-                            ToolTip="Open Log Folder"
-                            Command="{Binding OpenLogFolderCommand}">
-                        <materialDesign:PackIcon Kind="FolderFileOutline" />
-                    </Button>
-                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
+                <!-- Right: settings -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="8,0,0,0">
+                    <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
                             ToolTip="Toggle Theme"
-                            Command="{Binding ToggleThemeCommand}">
-                        <materialDesign:PackIcon Kind="ThemeLightDark" />
+                            Command="{Binding ToggleThemeCommand}"
+                            Padding="8,4" Height="32">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ThemeLightDark" VerticalAlignment="Center" />
+                            <TextBlock Text="Theme" Margin="4,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
+                    <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
                             ToolTip="About"
-                            Command="{Binding ShowAboutCommand}">
+                            Command="{Binding ShowAboutCommand}"
+                            Padding="8,4" Height="32">
                         <materialDesign:PackIcon Kind="InformationOutline" />
                     </Button>
                 </StackPanel>
+
                 <StackPanel Orientation="Horizontal">
-                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
+                    <!-- Create group -->
+                    <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
                             ToolTip="New Folder (Ctrl+Shift+N)"
-                            Command="{Binding AddFolderCommand}">
-                        <materialDesign:PackIcon Kind="FolderPlus" />
+                            Command="{Binding AddFolderCommand}"
+                            Padding="8,4" Height="32">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FolderPlus" VerticalAlignment="Center" />
+                            <TextBlock Text="New Folder" Margin="4,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
+                    <Button Style="{StaticResource MaterialDesignFlatMidBgButton}"
                             ToolTip="New Connection (Ctrl+N)"
-                            Command="{Binding AddConnectionCommand}">
-                        <materialDesign:PackIcon Kind="MonitorDashboard" />
+                            Command="{Binding AddConnectionCommand}"
+                            Margin="4,0,0,0" Padding="12,4"
+                            Height="32">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="MonitorDashboard" VerticalAlignment="Center" />
+                            <TextBlock Text="New Connection" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
-                    <Separator Style="{StaticResource MaterialDesignSeparator}" Margin="8,4" />
-                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
+
+                    <Separator Style="{StaticResource MaterialDesignSeparator}" Margin="10,4" />
+
+                    <!-- Data I/O group -->
+                    <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
                             ToolTip="Import"
-                            Command="{Binding ImportCommand}">
-                        <materialDesign:PackIcon Kind="Import" />
+                            Command="{Binding ImportCommand}"
+                            Padding="8,4" Height="32">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Import" VerticalAlignment="Center" />
+                            <TextBlock Text="Import" Margin="4,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
+                    <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
                             ToolTip="Export"
-                            Command="{Binding ExportCommand}">
-                        <materialDesign:PackIcon Kind="Export" />
+                            Command="{Binding ExportCommand}"
+                            Padding="8,4" Height="32">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Export" VerticalAlignment="Center" />
+                            <TextBlock Text="Export" Margin="4,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Separator Style="{StaticResource MaterialDesignSeparator}" Margin="10,4" />
+
+                    <!-- Quick Connect -->
+                    <TextBox x:Name="QuickConnectBox"
+                             Width="200" Height="28"
+                             VerticalAlignment="Center"
+                             Margin="4,0,4,0" Padding="4,2"
+                             FontSize="13"
+                             materialDesign:HintAssist.Hint="Quick Connect (host:port)"
+                             materialDesign:HintAssist.IsFloating="False"
+                             materialDesign:TextFieldAssist.HasClearButton="True"
+                             materialDesign:TextFieldAssist.DecorationVisibility="Collapsed"
+                             Background="{DynamicResource MaterialDesign.Brush.Background}"
+                             Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                             Text="{Binding QuickConnectAddress, UpdateSourceTrigger=PropertyChanged}"
+                             KeyDown="QuickConnectBox_KeyDown" />
+                    <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
+                            ToolTip="Connect"
+                            Command="{Binding QuickConnectCommand}"
+                            Padding="8,4" Height="32">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Play" VerticalAlignment="Center" />
+                            <TextBlock Text="Connect" Margin="4,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
                 </StackPanel>
             </DockPanel>
@@ -105,52 +154,74 @@
             <!-- Tree View Panel -->
             <Border Grid.Column="0" BorderThickness="0,0,1,0"
                     BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}">
-                <Grid>
-                    <TextBlock Text="No entries yet.&#x0a;Use the toolbar to create a folder or connection."
-                               TextWrapping="Wrap" Margin="16"
-                               Opacity="0.5" TextAlignment="Center"
-                               VerticalAlignment="Center" HorizontalAlignment="Center"
-                               Visibility="{Binding TreeVM.HasEntries, Converter={StaticResource InverseBoolToVis}}" />
+                <DockPanel>
+                    <!-- Search filter + Connect Selected bar -->
+                    <DockPanel DockPanel.Dock="Top" Margin="4,4,4,0">
+                        <Button DockPanel.Dock="Right"
+                                Style="{StaticResource MaterialDesignIconForegroundButton}"
+                                ToolTip="Connect Selected"
+                                Command="{Binding ConnectSelectedCommand}"
+                                Visibility="{Binding HasCheckedEntries, Converter={StaticResource BoolToVis}}"
+                                Width="28" Height="28">
+                            <materialDesign:PackIcon Kind="PlayCircleOutline" Width="20" Height="20" />
+                        </Button>
+                        <TextBox materialDesign:HintAssist.Hint="Filter..."
+                                 materialDesign:HintAssist.IsFloating="False"
+                                 materialDesign:TextFieldAssist.HasClearButton="True"
+                                 materialDesign:TextFieldAssist.DecorationVisibility="Collapsed"
+                                 FontSize="13" Padding="4,2"
+                                 Text="{Binding TreeFilterText, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
 
-                    <TreeView ItemsSource="{Binding TreeVM.RootEntries}"
-                              Visibility="{Binding TreeVM.HasEntries, Converter={StaticResource BoolToVis}}"
-                              behaviors:TreeViewDragDropBehavior.IsEnabled="True"
-                              behaviors:TreeViewDragDropBehavior.TreeViewModel="{Binding TreeVM}"
-                              VirtualizingStackPanel.IsVirtualizing="True"
-                              BorderThickness="0" Padding="4"
-                              SelectedItemChanged="TreeView_SelectedItemChanged">
-                        <TreeView.ItemContainerStyle>
-                            <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
-                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                                <EventSetter Event="MouseDoubleClick" Handler="TreeViewItem_MouseDoubleClick" />
-                            </Style>
-                        </TreeView.ItemContainerStyle>
-                        <TreeView.ItemTemplate>
-                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                <Grid>
-                                    <!-- Normal display -->
-                                    <StackPanel Orientation="Horizontal"
-                                                Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVis}}">
-                                        <materialDesign:PackIcon
-                                            Kind="{Binding EntryType, Converter={StaticResource EntryTypeToIcon}}"
-                                            VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18" />
-                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                    <!-- Inline edit mode -->
-                                    <StackPanel Orientation="Horizontal"
-                                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
-                                        <materialDesign:PackIcon
-                                            Kind="{Binding EntryType, Converter={StaticResource EntryTypeToIcon}}"
-                                            VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18" />
-                                        <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
-                                                 MinWidth="120" Padding="2"
-                                                 materialDesign:TextFieldAssist.DecorationVisibility="Hidden"
-                                                 Loaded="EditTextBox_Loaded"
-                                                 LostFocus="EditTextBox_LostFocus"
-                                                 KeyDown="EditTextBox_KeyDown" />
-                                    </StackPanel>
-                                </Grid>
+                    <Grid>
+                        <TextBlock Text="No entries yet.&#x0a;Use the toolbar to create a folder or connection."
+                                   TextWrapping="Wrap" Margin="16"
+                                   Opacity="0.5" TextAlignment="Center"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   Visibility="{Binding TreeVM.HasEntries, Converter={StaticResource InverseBoolToVis}}" />
+
+                        <TreeView ItemsSource="{Binding TreeVM.FilteredRootEntries}"
+                                  Visibility="{Binding TreeVM.HasEntries, Converter={StaticResource BoolToVis}}"
+                                  behaviors:TreeViewDragDropBehavior.IsEnabled="True"
+                                  behaviors:TreeViewDragDropBehavior.TreeViewModel="{Binding TreeVM}"
+                                  VirtualizingStackPanel.IsVirtualizing="True"
+                                  BorderThickness="0" Padding="4"
+                                  SelectedItemChanged="TreeView_SelectedItemChanged">
+                            <TreeView.ItemContainerStyle>
+                                <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                    <EventSetter Event="MouseDoubleClick" Handler="TreeViewItem_MouseDoubleClick" />
+                                </Style>
+                            </TreeView.ItemContainerStyle>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding FilteredChildren}">
+                                    <Grid>
+                                        <!-- Normal display -->
+                                        <StackPanel Orientation="Horizontal"
+                                                    Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVis}}">
+                                            <CheckBox IsChecked="{Binding IsChecked}"
+                                                      VerticalAlignment="Center" Margin="0,0,4,0"
+                                                      Visibility="{Binding IsConnection, Converter={StaticResource BoolToVis}}" />
+                                            <materialDesign:PackIcon
+                                                Kind="{Binding EntryType, Converter={StaticResource EntryTypeToIcon}}"
+                                                VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18" />
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <!-- Inline edit mode -->
+                                        <StackPanel Orientation="Horizontal"
+                                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
+                                            <materialDesign:PackIcon
+                                                Kind="{Binding EntryType, Converter={StaticResource EntryTypeToIcon}}"
+                                                VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18" />
+                                            <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                                     MinWidth="120" Padding="2"
+                                                     materialDesign:TextFieldAssist.DecorationVisibility="Hidden"
+                                                     Loaded="EditTextBox_Loaded"
+                                                     LostFocus="EditTextBox_LostFocus"
+                                                     KeyDown="EditTextBox_KeyDown" />
+                                        </StackPanel>
+                                    </Grid>
 
                                 <!-- Context Menu -->
                                 <HierarchicalDataTemplate.Resources>
@@ -203,7 +274,8 @@
                             </HierarchicalDataTemplate>
                         </TreeView.ItemTemplate>
                     </TreeView>
-                </Grid>
+                    </Grid>
+                </DockPanel>
             </Border>
 
             <GridSplitter Grid.Column="1" Width="4"

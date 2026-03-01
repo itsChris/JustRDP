@@ -43,8 +43,22 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDarkTheme = true;
 
+    [ObservableProperty]
+    private string _quickConnectAddress = string.Empty;
+
+    [ObservableProperty]
+    private string _treeFilterText = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasCheckedEntries;
+
     public bool HasNoTabs => OpenTabCount == 0;
     public bool HasNoSelection => SelectedEntry is null;
+
+    partial void OnTreeFilterTextChanged(string value)
+    {
+        TreeVM.ApplyFilter(value);
+    }
 
     public TreeViewModel TreeVM { get; }
     public PropertiesViewModel PropertiesVM { get; } = new();
@@ -64,7 +78,8 @@ public partial class MainWindowViewModel : ObservableObject
         _importExportService = importExportService;
         _encryptor = encryptor;
         _themeManager = themeManager;
-        TreeVM = new TreeViewModel(treeService, OnConnectionDoubleClick, OnSelectionChanged, OpenConnectionAsync);
+        TreeVM = new TreeViewModel(treeService, OnConnectionDoubleClick, OnSelectionChanged, OpenConnectionAsync,
+            () => HasCheckedEntries = TreeVM!.GetCheckedConnections().Count > 0);
     }
 
     public async Task InitializeAsync()
@@ -137,6 +152,52 @@ public partial class MainWindowViewModel : ObservableObject
             "JustRDP", "logs");
         Directory.CreateDirectory(logFolder);
         System.Diagnostics.Process.Start("explorer.exe", logFolder);
+    }
+
+    [RelayCommand]
+    private async Task QuickConnect()
+    {
+        var address = QuickConnectAddress?.Trim();
+        if (string.IsNullOrEmpty(address)) return;
+
+        var parts = address.Split(':', 2);
+        var host = parts[0];
+        var port = parts.Length > 1 && int.TryParse(parts[1], out var p) ? p : 3389;
+
+        _logger.LogInformation("Quick connect to {Host}:{Port}", host, port);
+
+        // Create a temporary in-memory connection (not persisted)
+        var connection = new ConnectionEntry
+        {
+            Name = address,
+            HostName = host,
+            Port = port
+        };
+
+        var credential = new Domain.ValueObjects.Credential(string.Empty, string.Empty, string.Empty, null);
+        var tabVm = new ConnectionTabViewModel(connection, credential);
+        tabVm.CloseRequested += tab => CloseTab(tab);
+        OpenTabs.Add(tabVm);
+        SelectedTab = tabVm;
+        OpenTabCount = OpenTabs.Count;
+        UpdateStatus();
+
+        QuickConnectAddress = string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task ConnectSelected()
+    {
+        var connections = TreeVM.GetCheckedConnections();
+        if (connections.Count == 0) return;
+
+        _logger.LogInformation("Connecting to {Count} selected entries", connections.Count);
+        foreach (var connection in connections)
+        {
+            await OpenConnectionAsync(connection);
+        }
+        TreeVM.ClearChecked();
+        HasCheckedEntries = false;
     }
 
     [RelayCommand]

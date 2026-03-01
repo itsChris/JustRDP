@@ -13,6 +13,7 @@ public partial class TreeViewModel : ObservableObject
     private readonly Action<ConnectionEntry>? _onConnectionDoubleClick;
     private readonly Func<ConnectionEntry, Task>? _onOpenConnection;
     private readonly Action<TreeEntryViewModel?>? _onSelectionChanged;
+    private Action? _onCheckedChanged;
 
     [ObservableProperty]
     private TreeEntryViewModel? _selectedEntry;
@@ -24,17 +25,20 @@ public partial class TreeViewModel : ObservableObject
     public bool HasEntries => EntryCount > 0;
 
     public ObservableCollection<TreeEntryViewModel> RootEntries { get; } = [];
+    public ObservableCollection<TreeEntryViewModel> FilteredRootEntries { get; } = [];
 
     public TreeViewModel(
         TreeService treeService,
         Action<ConnectionEntry>? onConnectionDoubleClick = null,
         Action<TreeEntryViewModel?>? onSelectionChanged = null,
-        Func<ConnectionEntry, Task>? onOpenConnection = null)
+        Func<ConnectionEntry, Task>? onOpenConnection = null,
+        Action? onCheckedChanged = null)
     {
         _treeService = treeService;
         _onConnectionDoubleClick = onConnectionDoubleClick;
         _onSelectionChanged = onSelectionChanged;
         _onOpenConnection = onOpenConnection;
+        _onCheckedChanged = onCheckedChanged;
     }
 
     partial void OnSelectedEntryChanged(TreeEntryViewModel? value)
@@ -46,7 +50,12 @@ public partial class TreeViewModel : ObservableObject
     {
         var allEntries = await _treeService.GetAllEntriesAsync();
         var lookup = allEntries.ToDictionary(e => e.Id);
-        var viewModels = allEntries.ToDictionary(e => e.Id, e => new TreeEntryViewModel(e));
+        var viewModels = allEntries.ToDictionary(e => e.Id, e =>
+        {
+            var vm = new TreeEntryViewModel(e);
+            vm.CheckedChanged = _onCheckedChanged;
+            return vm;
+        });
 
         RootEntries.Clear();
 
@@ -64,13 +73,101 @@ public partial class TreeViewModel : ObservableObject
         }
 
         EntryCount = allEntries.Count;
+        SyncFilteredEntries();
+    }
+
+    public void ApplyFilter(string? filterText)
+    {
+        _currentFilter = filterText?.Trim() ?? string.Empty;
+        ApplyFilterRecursive(RootEntries, _currentFilter);
+        SyncFilteredEntries();
+    }
+
+    private string _currentFilter = string.Empty;
+
+    private static bool ApplyFilterRecursive(ObservableCollection<TreeEntryViewModel> entries, string filter)
+    {
+        var anyVisible = false;
+        foreach (var entry in entries)
+        {
+            var childVisible = ApplyFilterRecursive(entry.Children, filter);
+            var nameMatch = string.IsNullOrEmpty(filter) ||
+                            entry.Name.Contains(filter, StringComparison.OrdinalIgnoreCase);
+            entry.IsVisible = nameMatch || childVisible;
+
+            if (entry.IsVisible)
+                anyVisible = true;
+
+            // Auto-expand folders that have matching children during filter
+            if (childVisible && !string.IsNullOrEmpty(filter) && entry.IsFolder)
+                entry.IsExpanded = true;
+
+            // Sync filtered children
+            entry.FilteredChildren.Clear();
+            foreach (var child in entry.Children)
+            {
+                if (child.IsVisible)
+                    entry.FilteredChildren.Add(child);
+            }
+        }
+        return anyVisible;
+    }
+
+    private void SyncFilteredEntries()
+    {
+        // If no filter active, sync all; otherwise only visible
+        ApplyFilterRecursive(RootEntries, _currentFilter);
+        FilteredRootEntries.Clear();
+        foreach (var entry in RootEntries)
+        {
+            if (entry.IsVisible)
+                FilteredRootEntries.Add(entry);
+        }
+    }
+
+    public List<ConnectionEntry> GetCheckedConnections()
+    {
+        var results = new List<ConnectionEntry>();
+        CollectCheckedConnections(RootEntries, results);
+        return results;
+    }
+
+    private static void CollectCheckedConnections(ObservableCollection<TreeEntryViewModel> entries, List<ConnectionEntry> results)
+    {
+        foreach (var entry in entries)
+        {
+            if (entry.IsChecked && entry.Entity is ConnectionEntry conn && !string.IsNullOrEmpty(conn.HostName))
+                results.Add(conn);
+            CollectCheckedConnections(entry.Children, results);
+        }
+    }
+
+    public void ClearChecked()
+    {
+        ClearCheckedRecursive(RootEntries);
+    }
+
+    private static void ClearCheckedRecursive(ObservableCollection<TreeEntryViewModel> entries)
+    {
+        foreach (var entry in entries)
+        {
+            entry.IsChecked = false;
+            ClearCheckedRecursive(entry.Children);
+        }
+    }
+
+    private TreeEntryViewModel CreateVm(TreeEntry entity)
+    {
+        var vm = new TreeEntryViewModel(entity);
+        vm.CheckedChanged = _onCheckedChanged;
+        return vm;
     }
 
     [RelayCommand]
     private async Task AddFolder(Guid? parentId)
     {
         var folder = await _treeService.CreateFolderAsync("New Folder", parentId);
-        var vm = new TreeEntryViewModel(folder);
+        var vm = CreateVm(folder);
         AddToTree(vm, parentId);
         vm.BeginEditCommand.Execute(null);
         SelectedEntry = vm;
@@ -81,7 +178,7 @@ public partial class TreeViewModel : ObservableObject
     private async Task AddConnection(Guid? parentId)
     {
         var connection = await _treeService.CreateConnectionAsync("New Connection", string.Empty, parentId);
-        var vm = new TreeEntryViewModel(connection);
+        var vm = CreateVm(connection);
         AddToTree(vm, parentId);
         vm.BeginEditCommand.Execute(null);
         SelectedEntry = vm;
@@ -135,7 +232,7 @@ public partial class TreeViewModel : ObservableObject
     {
         if (entry?.Entity is not ConnectionEntry source) return;
         var duplicate = await _treeService.DuplicateConnectionAsync(source);
-        var vm = new TreeEntryViewModel(duplicate);
+        var vm = CreateVm(duplicate);
         AddToTree(vm, duplicate.ParentId);
         vm.BeginEditCommand.Execute(null);
         SelectedEntry = vm;
@@ -242,10 +339,12 @@ public partial class TreeViewModel : ObservableObject
             {
                 parent.Children.Add(vm);
                 parent.IsExpanded = true;
+                SyncFilteredEntries();
                 return;
             }
         }
         RootEntries.Add(vm);
+        SyncFilteredEntries();
     }
 
     private void RemoveFromTree(TreeEntryViewModel entry)
@@ -258,6 +357,7 @@ public partial class TreeViewModel : ObservableObject
                     break;
             }
         }
+        SyncFilteredEntries();
     }
 
     private static bool RemoveFromCollection(TreeEntryViewModel entry, ObservableCollection<TreeEntryViewModel> collection)

@@ -23,6 +23,20 @@ public partial class TreeEntryViewModel : ObservableObject
     [ObservableProperty]
     private string _editName = string.Empty;
 
+    [ObservableProperty]
+    private bool _isChecked;
+
+    partial void OnIsCheckedChanged(bool value)
+    {
+        CheckedChanged?.Invoke();
+    }
+
+    /// <summary>Raised when any entry's IsChecked changes. Wired by TreeViewModel.</summary>
+    public Action? CheckedChanged { get; set; }
+
+    [ObservableProperty]
+    private bool _isVisible = true;
+
     public Guid Id { get; }
     public Guid? ParentId { get; set; }
     public int SortOrder { get; set; }
@@ -31,6 +45,7 @@ public partial class TreeEntryViewModel : ObservableObject
     public bool IsFolder => EntryType == TreeEntryType.Folder;
     public TreeEntry Entity { get; }
     public ObservableCollection<TreeEntryViewModel> Children { get; } = [];
+    public ObservableCollection<TreeEntryViewModel> FilteredChildren { get; } = [];
 
     public TreeEntryViewModel(TreeEntry entity)
     {

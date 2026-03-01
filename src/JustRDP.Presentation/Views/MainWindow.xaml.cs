@@ -65,6 +65,15 @@ public partial class MainWindow : Window
         }
     }
 
+    private void QuickConnectBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && ViewModel.QuickConnectCommand.CanExecute(null))
+        {
+            ViewModel.QuickConnectCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
     private void EditTextBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (sender is not TextBox { DataContext: TreeEntryViewModel vm }) return;
