@@ -26,4 +26,19 @@ public partial class PropertiesDialog : Window
         DialogResult = false;
         Close();
     }
+
+    private void BrowseSshKey_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Select SSH Private Key",
+            Filter = "All Files|*.*|PEM Files|*.pem|OpenSSH Keys|*.key",
+            CheckFileExists = true
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            _viewModel.SshPrivateKeyPath = dialog.FileName;
+        }
+    }
 }

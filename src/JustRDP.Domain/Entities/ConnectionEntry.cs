@@ -1,8 +1,11 @@
+using JustRDP.Domain.Enums;
+
 namespace JustRDP.Domain.Entities;
 
 public class ConnectionEntry : TreeEntry
 {
     // Connection
+    public ConnectionType ConnectionType { get; set; } = ConnectionType.RDP;
     public string HostName { get; set; } = string.Empty;
     public int Port { get; set; } = 3389;
 
@@ -41,4 +44,10 @@ public class ConnectionEntry : TreeEntry
 
     // Notes
     public string? Notes { get; set; }
+
+    // SSH
+    public string? SshPrivateKeyPath { get; set; }
+    public byte[]? SshPrivateKeyPassphraseEncrypted { get; set; }
+    public string? SshTerminalFontFamily { get; set; }
+    public double? SshTerminalFontSize { get; set; }
 }

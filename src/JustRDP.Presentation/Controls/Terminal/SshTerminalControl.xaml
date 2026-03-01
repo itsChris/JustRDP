@@ -1,0 +1,9 @@
+<UserControl x:Class="JustRDP.Presentation.Controls.Terminal.SshTerminalControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:terminal="clr-namespace:JustRDP.Presentation.Controls.Terminal"
+             Focusable="True">
+    <Grid>
+        <terminal:TerminalRenderer x:Name="TerminalArea" />
+    </Grid>
+</UserControl>

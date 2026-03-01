@@ -79,7 +79,7 @@ public partial class App : System.Windows.Application
         using (var scope = _host.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<JustRdpDbContext>();
-            await db.Database.EnsureCreatedAsync();
+            await MigrateDatabaseAsync(db);
         }
 
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
@@ -95,6 +95,66 @@ public partial class App : System.Windows.Application
         _host.Dispose();
         await Log.CloseAndFlushAsync();
         base.OnExit(e);
+    }
+
+    private static async Task MigrateDatabaseAsync(JustRdpDbContext db)
+    {
+        // Check if this is a legacy database created by EnsureCreated (has tables but no migration history).
+        // In that case, the schema already matches InitialCreate, so we seed the history and then apply
+        // any subsequent migrations.
+        var pendingMigrations = (await db.Database.GetPendingMigrationsAsync()).ToList();
+        if (pendingMigrations.Count > 0)
+        {
+            bool tablesExist = false;
+            try
+            {
+                // SQLite-specific check: if the TreeEntries table exists, this is a legacy DB
+                await db.Database.ExecuteSqlRawAsync(
+                    "SELECT 1 FROM TreeEntries LIMIT 1");
+                tablesExist = true;
+            }
+            catch
+            {
+                // Table doesn't exist — fresh database
+            }
+
+            if (tablesExist && pendingMigrations.Contains("20260301232951_InitialCreate"))
+            {
+                // Legacy DB: mark InitialCreate as already applied, then run remaining migrations
+                await db.Database.ExecuteSqlRawAsync(
+                    "CREATE TABLE IF NOT EXISTS \"__EFMigrationsHistory\" (" +
+                    "\"MigrationId\" TEXT NOT NULL PRIMARY KEY, " +
+                    "\"ProductVersion\" TEXT NOT NULL)");
+                await db.Database.ExecuteSqlRawAsync(
+                    "INSERT OR IGNORE INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") " +
+                    "VALUES ('20260301232951_InitialCreate', '10.0.0')");
+
+                // Now add any columns that the legacy DB might be missing (SSH support)
+                var alterStatements = new[]
+                {
+                    "ALTER TABLE TreeEntries ADD COLUMN ConnectionType INTEGER DEFAULT 0",
+                    "ALTER TABLE TreeEntries ADD COLUMN SshPrivateKeyPath TEXT",
+                    "ALTER TABLE TreeEntries ADD COLUMN SshPrivateKeyPassphraseEncrypted BLOB",
+                    "ALTER TABLE TreeEntries ADD COLUMN SshTerminalFontFamily TEXT",
+                    "ALTER TABLE TreeEntries ADD COLUMN SshTerminalFontSize REAL",
+                };
+
+                foreach (var sql in alterStatements)
+                {
+                    try
+                    {
+                        await db.Database.ExecuteSqlRawAsync(sql);
+                    }
+                    catch
+                    {
+                        // Column already exists — ignore
+                    }
+                }
+            }
+        }
+
+        // Apply any remaining pending migrations
+        await db.Database.MigrateAsync();
     }
 
     private static string ResolveDatabasePath(IConfiguration configuration)

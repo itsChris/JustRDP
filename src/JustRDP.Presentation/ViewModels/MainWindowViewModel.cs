@@ -4,7 +4,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using JustRDP.Application.Services;
 using JustRDP.Domain.Entities;
+using JustRDP.Domain.Enums;
 using JustRDP.Domain.Interfaces;
+using JustRDP.Domain.ValueObjects;
 using JustRDP.Presentation.Services;
 using JustRDP.Presentation.Themes;
 using JustRDP.Presentation.Views;
@@ -35,9 +37,9 @@ public partial class MainWindowViewModel : ObservableObject
     private TreeEntryViewModel? _selectedEntry;
 
     [ObservableProperty]
-    private ConnectionTabViewModel? _selectedTab;
+    private IConnectionTab? _selectedTab;
 
-    partial void OnSelectedTabChanged(ConnectionTabViewModel? oldValue, ConnectionTabViewModel? newValue)
+    partial void OnSelectedTabChanged(IConnectionTab? oldValue, IConnectionTab? newValue)
     {
         if (oldValue is not null) oldValue.IsSelected = false;
         if (newValue is not null) newValue.IsSelected = true;
@@ -71,7 +73,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public TreeViewModel TreeVM { get; }
     public PropertiesViewModel PropertiesVM { get; } = new();
-    public ObservableCollection<ConnectionTabViewModel> OpenTabs { get; } = [];
+    public ObservableCollection<IConnectionTab> OpenTabs { get; } = [];
 
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger,
@@ -122,7 +124,17 @@ public partial class MainWindowViewModel : ObservableObject
 
         _logger.LogInformation("Opening connection {Name} ({Host}:{Port})", connection.Name, connection.HostName, connection.Port);
         var credential = await _credentialService.ResolveCredentialAsync(connection);
-        var tabVm = new ConnectionTabViewModel(connection, credential);
+
+        IConnectionTab tabVm;
+        if (connection.ConnectionType == ConnectionType.SSH)
+        {
+            tabVm = new SshTabViewModel(connection, credential, _encryptor, _serviceProvider.GetService<ILoggerFactory>());
+        }
+        else
+        {
+            tabVm = new ConnectionTabViewModel(connection, credential);
+        }
+
         tabVm.CloseRequested += tab => CloseTab(tab);
         OpenTabs.Add(tabVm);
         SelectedTab = tabVm;
@@ -131,7 +143,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void CloseTab(ConnectionTabViewModel? tab)
+    private void CloseTab(IConnectionTab? tab)
     {
         if (tab is null) return;
         _logger.LogInformation("Closing connection tab {Name}", tab.TabTitle);
@@ -176,25 +188,61 @@ public partial class MainWindowViewModel : ObservableObject
         var address = QuickConnectAddress?.Trim();
         if (string.IsNullOrEmpty(address)) return;
 
+        // SSH quick connect: ssh://[user@]host[:port]
+        if (address.StartsWith("ssh://", StringComparison.OrdinalIgnoreCase))
+        {
+            var uri = address[6..];
+            string? user = null;
+            if (uri.Contains('@'))
+            {
+                var p = uri.Split('@', 2);
+                user = p[0];
+                uri = p[1];
+            }
+            var hp = uri.Split(':', 2);
+            var host = hp[0];
+            var port = hp.Length > 1 && int.TryParse(hp[1], out var p2) ? p2 : 22;
+
+            _logger.LogInformation("Quick SSH connect to {Host}:{Port}", host, port);
+
+            var conn = new ConnectionEntry
+            {
+                Name = address,
+                HostName = host,
+                Port = port,
+                ConnectionType = ConnectionType.SSH,
+                CredentialUsername = user
+            };
+            var cred = new Credential(user ?? "", "", "", null);
+            var tabVm = new SshTabViewModel(conn, cred, _encryptor, _serviceProvider.GetService<ILoggerFactory>());
+            tabVm.CloseRequested += tab => CloseTab(tab);
+            OpenTabs.Add(tabVm);
+            SelectedTab = tabVm;
+            OpenTabCount = OpenTabs.Count;
+            UpdateStatus();
+            QuickConnectAddress = string.Empty;
+            return;
+        }
+
+        // RDP quick connect: host[:port]
         var parts = address.Split(':', 2);
-        var host = parts[0];
-        var port = parts.Length > 1 && int.TryParse(parts[1], out var p) ? p : 3389;
+        var rdpHost = parts[0];
+        var rdpPort = parts.Length > 1 && int.TryParse(parts[1], out var pp) ? pp : 3389;
 
-        _logger.LogInformation("Quick connect to {Host}:{Port}", host, port);
+        _logger.LogInformation("Quick connect to {Host}:{Port}", rdpHost, rdpPort);
 
-        // Create a temporary in-memory connection (not persisted)
         var connection = new ConnectionEntry
         {
             Name = address,
-            HostName = host,
-            Port = port
+            HostName = rdpHost,
+            Port = rdpPort
         };
 
-        var credential = new Domain.ValueObjects.Credential(string.Empty, string.Empty, string.Empty, null);
-        var tabVm = new ConnectionTabViewModel(connection, credential);
-        tabVm.CloseRequested += tab => CloseTab(tab);
-        OpenTabs.Add(tabVm);
-        SelectedTab = tabVm;
+        var credential = new Credential(string.Empty, string.Empty, string.Empty, null);
+        var rdpTab = new ConnectionTabViewModel(connection, credential);
+        rdpTab.CloseRequested += tab => CloseTab(tab);
+        OpenTabs.Add(rdpTab);
+        SelectedTab = rdpTab;
         OpenTabCount = OpenTabs.Count;
         UpdateStatus();
 

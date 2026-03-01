@@ -44,6 +44,7 @@ public partial class TreeEntryViewModel : ObservableObject
     public Guid? ParentId { get; set; }
     public int SortOrder { get; set; }
     public TreeEntryType EntryType { get; }
+    public Domain.Enums.ConnectionType? ConnectionType { get; }
     public bool IsConnection => EntryType == TreeEntryType.Connection;
     public bool IsFolder => EntryType == TreeEntryType.Folder;
     public TreeEntry Entity { get; }
@@ -66,6 +67,7 @@ public partial class TreeEntryViewModel : ObservableObject
         else
         {
             EntryType = TreeEntryType.Connection;
+            ConnectionType = entity is ConnectionEntry conn ? conn.ConnectionType : null;
         }
     }
 

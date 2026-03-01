@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using JustRDP.Application.Services;
 using JustRDP.Domain.Entities;
+using JustRDP.Domain.Enums;
 using JustRDP.Domain.Interfaces;
 
 namespace JustRDP.Presentation.ViewModels;
@@ -49,6 +50,29 @@ public partial class ConnectionPropertiesViewModel : ObservableObject
     // Notes
     [ObservableProperty] private string? _notes;
 
+    // Connection Type
+    [ObservableProperty] private ConnectionType _connectionType;
+
+    partial void OnConnectionTypeChanged(ConnectionType value)
+    {
+        OnPropertyChanged(nameof(IsSsh));
+        OnPropertyChanged(nameof(IsRdp));
+        // Auto-switch default port
+        if (value == ConnectionType.SSH && Port == 3389)
+            Port = 22;
+        else if (value == ConnectionType.RDP && Port == 22)
+            Port = 3389;
+    }
+
+    public bool IsSsh => !IsFolder && ConnectionType == ConnectionType.SSH;
+    public bool IsRdp => !IsFolder && ConnectionType == ConnectionType.RDP;
+
+    // SSH
+    [ObservableProperty] private string? _sshPrivateKeyPath;
+    [ObservableProperty] private string? _sshPrivateKeyPassphrase;
+    [ObservableProperty] private string? _sshTerminalFontFamily;
+    [ObservableProperty] private double? _sshTerminalFontSize;
+
     // UI
     [ObservableProperty] private bool _isFolder;
     [ObservableProperty] private string _windowTitle = "Properties";
@@ -89,6 +113,13 @@ public partial class ConnectionPropertiesViewModel : ObservableObject
         AudioRedirectionMode = connection.AudioRedirectionMode;
         GatewayHostName = connection.GatewayHostName;
         Notes = connection.Notes;
+        ConnectionType = connection.ConnectionType;
+        SshPrivateKeyPath = connection.SshPrivateKeyPath;
+        SshPrivateKeyPassphrase = connection.SshPrivateKeyPassphraseEncrypted is not null
+            ? _encryptor.Decrypt(connection.SshPrivateKeyPassphraseEncrypted)
+            : null;
+        SshTerminalFontFamily = connection.SshTerminalFontFamily;
+        SshTerminalFontSize = connection.SshTerminalFontSize;
     }
 
     public void LoadFolder(FolderEntry folder)
@@ -133,6 +164,13 @@ public partial class ConnectionPropertiesViewModel : ObservableObject
             _connection.AudioRedirectionMode = AudioRedirectionMode;
             _connection.GatewayHostName = string.IsNullOrWhiteSpace(GatewayHostName) ? null : GatewayHostName;
             _connection.Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes;
+            _connection.ConnectionType = ConnectionType;
+            _connection.SshPrivateKeyPath = string.IsNullOrWhiteSpace(SshPrivateKeyPath) ? null : SshPrivateKeyPath;
+            _connection.SshPrivateKeyPassphraseEncrypted = !string.IsNullOrEmpty(SshPrivateKeyPassphrase)
+                ? _encryptor.Encrypt(SshPrivateKeyPassphrase)
+                : null;
+            _connection.SshTerminalFontFamily = string.IsNullOrWhiteSpace(SshTerminalFontFamily) ? null : SshTerminalFontFamily;
+            _connection.SshTerminalFontSize = SshTerminalFontSize;
 
             await _treeService.UpdateAsync(_connection);
         }

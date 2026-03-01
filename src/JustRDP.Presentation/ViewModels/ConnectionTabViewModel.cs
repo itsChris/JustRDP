@@ -9,7 +9,7 @@ using Serilog;
 
 namespace JustRDP.Presentation.ViewModels;
 
-public partial class ConnectionTabViewModel : ObservableObject
+public partial class ConnectionTabViewModel : ObservableObject, IConnectionTab
 {
     private readonly ConnectionEntry _connection;
     private readonly Credential _credential;
@@ -39,7 +39,7 @@ public partial class ConnectionTabViewModel : ObservableObject
 
     public Guid ConnectionId => _connection.Id;
 
-    public event Action<ConnectionTabViewModel>? CloseRequested;
+    public event Action<IConnectionTab>? CloseRequested;
 
     public ConnectionTabViewModel(ConnectionEntry connection, Credential credential)
     {

@@ -5,15 +5,23 @@ using MaterialDesignThemes.Wpf;
 
 namespace JustRDP.Presentation.Converters;
 
-public class TreeEntryTypeToIconConverter : IValueConverter
+public class TreeEntryTypeToIconConverter : IMultiValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        return value is TreeEntryType type
-            ? type == TreeEntryType.Folder ? PackIconKind.Folder : PackIconKind.MonitorDashboard
-            : PackIconKind.File;
+        var entryType = values.Length > 0 && values[0] is TreeEntryType t ? t : TreeEntryType.Connection;
+        var connectionType = values.Length > 1 && values[1] is ConnectionType ct ? ct : (ConnectionType?)null;
+
+        if (entryType == TreeEntryType.Folder)
+            return PackIconKind.Folder;
+
+        return connectionType switch
+        {
+            ConnectionType.SSH => PackIconKind.Console,
+            _ => PackIconKind.MonitorDashboard
+        };
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }

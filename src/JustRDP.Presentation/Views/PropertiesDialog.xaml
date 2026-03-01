@@ -20,6 +20,7 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
         <converters:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
         <converters:IndexToVisibilityConverter x:Key="IndexToVisibility" />
+        <converters:NotNullOrEmptyToVisibilityConverter x:Key="NotNullToVis" />
     </Window.Resources>
 
     <Grid>
@@ -63,19 +64,19 @@
                             <TextBlock Text="Credentials" VerticalAlignment="Center" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem Visibility="{Binding IsFolder, Converter={StaticResource InverseBoolToVis}}">
+                    <ListBoxItem Visibility="{Binding IsRdp, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Monitor" VerticalAlignment="Center" Margin="0,0,10,0" Width="20" Height="20" />
                             <TextBlock Text="Display" VerticalAlignment="Center" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem Visibility="{Binding IsFolder, Converter={StaticResource InverseBoolToVis}}">
+                    <ListBoxItem Visibility="{Binding IsRdp, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="SwapHorizontal" VerticalAlignment="Center" Margin="0,0,10,0" Width="20" Height="20" />
                             <TextBlock Text="Redirection" VerticalAlignment="Center" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem Visibility="{Binding IsFolder, Converter={StaticResource InverseBoolToVis}}">
+                    <ListBoxItem Visibility="{Binding IsRdp, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="LanConnect" VerticalAlignment="Center" Margin="0,0,10,0" Width="20" Height="20" />
                             <TextBlock Text="Connection" VerticalAlignment="Center" />
@@ -85,6 +86,12 @@
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="NoteTextOutline" VerticalAlignment="Center" Margin="0,0,10,0" Width="20" Height="20" />
                             <TextBlock Text="Notes" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsSsh, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Console" VerticalAlignment="Center" Margin="0,0,10,0" Width="20" Height="20" />
+                            <TextBlock Text="SSH" VerticalAlignment="Center" />
                         </StackPanel>
                     </ListBoxItem>
                 </ListBox>
@@ -105,6 +112,14 @@
                                  Margin="0,0,0,16" />
 
                         <StackPanel Visibility="{Binding IsFolder, Converter={StaticResource InverseBoolToVis}}">
+                            <ComboBox materialDesign:HintAssist.Hint="Connection Type"
+                                      SelectedIndex="{Binding ConnectionType}"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      Margin="0,0,0,16">
+                                <ComboBoxItem Content="RDP (Remote Desktop)" />
+                                <ComboBoxItem Content="SSH (Secure Shell)" />
+                            </ComboBox>
+
                             <TextBox materialDesign:HintAssist.Hint="Host Name"
                                      Text="{Binding HostName, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -226,6 +241,55 @@
                                  VerticalScrollBarVisibility="Auto"
                                  Height="280"
                                  VerticalContentAlignment="Top" />
+                    </StackPanel>
+
+                    <!-- SSH -->
+                    <StackPanel Visibility="{Binding SelectedIndex, ElementName=NavList, Converter={StaticResource IndexToVisibility}, ConverterParameter=6}">
+                        <TextBlock Text="SSH Terminal" FontSize="18" FontWeight="Medium" Margin="0,0,0,20" />
+
+                        <TextBlock Text="Authentication" FontSize="13" FontWeight="Medium" Opacity="0.7" Margin="0,0,0,12" />
+
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     materialDesign:HintAssist.Hint="Private Key Path"
+                                     Text="{Binding SshPrivateKeyPath, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                            <Button Grid.Column="1"
+                                    Content="Browse..."
+                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    Click="BrowseSshKey_Click"
+                                    Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <PasswordBox materialDesign:HintAssist.Hint="Private Key Passphrase"
+                                     materialDesign:PasswordBoxAssist.Password="{Binding SshPrivateKeyPassphrase, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                     Margin="0,0,0,8" />
+
+                        <TextBlock Text="Leave empty if the private key is not passphrase-protected."
+                                   Opacity="0.5" FontSize="12" Margin="0,4,0,20" />
+
+                        <TextBlock Text="Terminal" FontSize="13" FontWeight="Medium" Opacity="0.7" Margin="0,0,0,12" />
+
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="120" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     materialDesign:HintAssist.Hint="Font Family (default: Consolas)"
+                                     Text="{Binding SshTerminalFontFamily, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                            <TextBox Grid.Column="2"
+                                     materialDesign:HintAssist.Hint="Font Size"
+                                     Text="{Binding SshTerminalFontSize, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </ScrollViewer>

@@ -1,4 +1,5 @@
 using JustRDP.Domain.Entities;
+using JustRDP.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,6 +9,7 @@ public class ConnectionEntryConfiguration : IEntityTypeConfiguration<ConnectionE
 {
     public void Configure(EntityTypeBuilder<ConnectionEntry> builder)
     {
+        builder.Property(e => e.ConnectionType).HasDefaultValue(ConnectionType.RDP);
         builder.Property(e => e.HostName).HasMaxLength(256);
         builder.Property(e => e.Port).HasDefaultValue(3389);
         builder.Property(e => e.ColorDepth).HasDefaultValue(32);
@@ -17,5 +19,6 @@ public class ConnectionEntryConfiguration : IEntityTypeConfiguration<ConnectionE
         builder.Property(e => e.RedirectClipboard).HasDefaultValue(true);
         builder.Property(e => e.Notes).HasMaxLength(4000);
         builder.Property(e => e.GatewayHostName).HasMaxLength(256);
+        builder.Property(e => e.SshTerminalFontFamily).HasMaxLength(128);
     }
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using JustRDP.Domain.Entities;
+using JustRDP.Domain.Enums;
 
 namespace JustRDP.Infrastructure.Import;
 
@@ -45,13 +46,15 @@ public static class JsonTreeImporter
         }
         else
         {
+            var connType = Enum.TryParse<ConnectionType>(node.ConnectionType, true, out var ct) ? ct : ConnectionType.RDP;
             var connection = new ConnectionEntry
             {
                 Name = node.Name ?? "Unnamed Connection",
                 ParentId = parentId,
                 SortOrder = entries.Count(e => e.ParentId == parentId),
+                ConnectionType = connType,
                 HostName = node.HostName ?? string.Empty,
-                Port = node.Port ?? 3389,
+                Port = node.Port ?? (connType == ConnectionType.SSH ? 22 : 3389),
                 CredentialUsername = node.CredentialUsername,
                 CredentialDomain = node.CredentialDomain,
                 DesktopWidth = node.DesktopWidth ?? 0,
@@ -68,7 +71,10 @@ public static class JsonTreeImporter
                 RedirectPorts = node.RedirectPorts ?? false,
                 AudioRedirectionMode = node.AudioRedirectionMode ?? 0,
                 GatewayHostName = node.GatewayHostName,
-                Notes = node.Notes
+                Notes = node.Notes,
+                SshPrivateKeyPath = node.SshPrivateKeyPath,
+                SshTerminalFontFamily = node.SshTerminalFontFamily,
+                SshTerminalFontSize = node.SshTerminalFontSize
             };
             entries.Add(connection);
         }
@@ -79,6 +85,7 @@ internal class JsonTreeNode
 {
     public string? Type { get; set; }
     public string? Name { get; set; }
+    public string? ConnectionType { get; set; }
     public string? HostName { get; set; }
     public int? Port { get; set; }
     public string? CredentialUsername { get; set; }
@@ -98,5 +105,8 @@ internal class JsonTreeNode
     public int? AudioRedirectionMode { get; set; }
     public string? GatewayHostName { get; set; }
     public string? Notes { get; set; }
+    public string? SshPrivateKeyPath { get; set; }
+    public string? SshTerminalFontFamily { get; set; }
+    public double? SshTerminalFontSize { get; set; }
     public List<JsonTreeNode>? Children { get; set; }
 }

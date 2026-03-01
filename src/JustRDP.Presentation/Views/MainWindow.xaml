@@ -30,6 +30,12 @@
         <converters:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
         <converters:InverseBoolConverter x:Key="InverseBool" />
         <converters:AvailabilityStatusToBrushConverter x:Key="AvailabilityToBrush" />
+
+        <DataTemplate x:Key="RdpTabTemplate"><views:ConnectionTabView /></DataTemplate>
+        <DataTemplate x:Key="SshTabTemplate"><views:SshTabView /></DataTemplate>
+        <views:ConnectionTabTemplateSelector x:Key="TabTemplateSelector"
+            RdpTemplate="{StaticResource RdpTabTemplate}"
+            SshTemplate="{StaticResource SshTabTemplate}" />
     </Window.Resources>
 
     <Window.InputBindings>
@@ -127,7 +133,7 @@
                              VerticalAlignment="Center"
                              Margin="4,0,4,0" Padding="4,2"
                              FontSize="13"
-                             materialDesign:HintAssist.Hint="Quick Connect (host:port)"
+                             materialDesign:HintAssist.Hint="Quick Connect (host:port or ssh://user@host)"
                              materialDesign:HintAssist.IsFloating="False"
                              materialDesign:TextFieldAssist.HasClearButton="True"
                              materialDesign:TextFieldAssist.DecorationVisibility="Collapsed"
@@ -239,17 +245,27 @@
                                                      VerticalAlignment="Center"
                                                      Fill="{Binding AvailabilityStatus, Converter={StaticResource AvailabilityToBrush}}"
                                                      Visibility="{Binding DataContext.IsMonitoringEnabled, Source={x:Reference ThisWindow}, Converter={StaticResource BoolToVis}}" />
-                                            <materialDesign:PackIcon
-                                                Kind="{Binding EntryType, Converter={StaticResource EntryTypeToIcon}}"
-                                                VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18" />
+                                            <materialDesign:PackIcon VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18">
+                                                <materialDesign:PackIcon.Kind>
+                                                    <MultiBinding Converter="{StaticResource EntryTypeToIcon}">
+                                                        <Binding Path="EntryType" />
+                                                        <Binding Path="ConnectionType" />
+                                                    </MultiBinding>
+                                                </materialDesign:PackIcon.Kind>
+                                            </materialDesign:PackIcon>
                                             <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
                                         </StackPanel>
                                         <!-- Inline edit mode -->
                                         <StackPanel Orientation="Horizontal"
                                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
-                                            <materialDesign:PackIcon
-                                                Kind="{Binding EntryType, Converter={StaticResource EntryTypeToIcon}}"
-                                                VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18" />
+                                            <materialDesign:PackIcon VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18">
+                                                <materialDesign:PackIcon.Kind>
+                                                    <MultiBinding Converter="{StaticResource EntryTypeToIcon}">
+                                                        <Binding Path="EntryType" />
+                                                        <Binding Path="ConnectionType" />
+                                                    </MultiBinding>
+                                                </materialDesign:PackIcon.Kind>
+                                            </materialDesign:PackIcon>
                                             <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
                                                      MinWidth="120" Padding="2"
                                                      materialDesign:TextFieldAssist.DecorationVisibility="Hidden"
@@ -320,7 +336,7 @@
 
             <!-- Tab Area -->
             <Grid Grid.Column="2">
-                <TextBlock Text="Double-click a connection to open an RDP session"
+                <TextBlock Text="Double-click a connection to open a session"
                            Opacity="0.3" FontSize="14"
                            VerticalAlignment="Center" HorizontalAlignment="Center"
                            Visibility="{Binding HasNoTabs, Converter={StaticResource BoolToVis}}" />
@@ -362,7 +378,8 @@
 
                     <!-- All RDP views live here simultaneously; only the selected one is Visible.
                          Collapsed WindowsFormsHost properly hides the native HWND (airspace fix). -->
-                    <ItemsControl ItemsSource="{Binding OpenTabs}">
+                    <ItemsControl ItemsSource="{Binding OpenTabs}"
+                                  ItemTemplateSelector="{StaticResource TabTemplateSelector}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <Grid />
@@ -378,11 +395,6 @@
                                 </Style.Triggers>
                             </Style>
                         </ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <views:ConnectionTabView />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </DockPanel>
             </Grid>

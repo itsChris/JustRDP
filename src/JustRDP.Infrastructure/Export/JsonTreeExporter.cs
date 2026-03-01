@@ -45,6 +45,7 @@ public static class JsonTreeExporter
         {
             Type = "Connection",
             conn.Name,
+            ConnectionType = conn.ConnectionType.ToString(),
             conn.HostName,
             conn.Port,
             CredentialUsername = conn.CredentialUsername,
@@ -63,7 +64,10 @@ public static class JsonTreeExporter
             conn.RedirectPorts,
             conn.AudioRedirectionMode,
             GatewayHostName = conn.GatewayHostName,
-            Notes = conn.Notes
+            Notes = conn.Notes,
+            SshPrivateKeyPath = conn.SshPrivateKeyPath,
+            SshTerminalFontFamily = conn.SshTerminalFontFamily,
+            SshTerminalFontSize = conn.SshTerminalFontSize
         };
     }
 }
