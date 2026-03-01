@@ -9,7 +9,7 @@
 | **Category** | Post-MVP |
 | **Priority** | P2 (Medium) |
 | **PRD Sections** | — (new feature) |
-| **Depends On** | FEAT-005 (tree CRUD), FEAT-011 (RDP sessions) |
+| **Depends On** | FEAT-005 (tree CRUD), FEAT-011 (RDP sessions), FEAT-111 (SSH connections) |
 | **Dependents** | — |
 | **Estimated Complexity** | L (1-2 weeks) |
 
@@ -18,14 +18,19 @@
 ## 1. Overview
 
 ### 1.1 Purpose
-Allows users to scan an IP range (CIDR notation) for hosts with open RDP ports. Discovered hosts can be selectively imported as connection entries into the tree. This enables quick onboarding of servers without manually creating each connection.
+Allows users to scan an IP range (CIDR notation) for hosts with open RDP and SSH ports. Discovered hosts can be selectively imported as connection entries into the tree with the correct `ConnectionType`. This enables quick onboarding of servers without manually creating each connection.
 
 ### 1.2 Scope
 **In Scope:**
 - Toolbar "Scan" button opening a non-modal scan window (single instance)
 - CIDR input with live range translation (human-readable)
 - CIDR range validation with upper bound (/16 max, confirmation for >/20)
-- TCP port scanning (default 3389 + user-defined additional ports with validation)
+- TCP port scanning (default 3389 + SSH port 22 pre-filled + user-defined additional ports with validation)
+- Protocol-aware scanning: ports 22 and 2222 treated as SSH, all others as RDP
+- Separate result rows per protocol when a host has both RDP and SSH open
+- Protocol column in results DataGrid showing "RDP" or "SSH"
+- Protocol-aware existing-host detection (same host can exist as RDP and SSH separately)
+- Imported entries created with correct `ConnectionType` (RDP or SSH)
 - Configurable timeout per port (default 1500ms)
 - Concurrent scanning (16 hosts in parallel)
 - Reverse DNS lookup for hostname resolution (silent failure)
@@ -84,7 +89,7 @@ Allows users to scan an IP range (CIDR notation) for hosts with open RDP ports. 
 
 **Acceptance Criteria:**
 - [ ] AC1: Results displayed in a DataGrid below the parameters section
-- [ ] AC2: Columns: Checkbox | IP Address | Hostname | Open Ports | Port (dropdown) | Status
+- [ ] AC2: Columns: Checkbox | IP Address | Hostname | Protocol | Port | Status
 - [ ] AC3: Hostname resolved via reverse DNS; falls back to IP if DNS fails (no error shown)
 - [ ] AC4: Hosts already in the database show green background + "Exists" text label
 - [ ] AC5: New (unknown) hosts show blue background + "New" text label
@@ -104,8 +109,8 @@ Allows users to scan an IP range (CIDR notation) for hosts with open RDP ports. 
 - [ ] AC1: Checkboxes on each result row for selection
 - [ ] AC2: "Import Selected (N)" button creates connection entries (count shown on button)
 - [ ] AC3: Folder dropdown lets user choose target folder (or root) — positioned near Import button
-- [ ] AC4: Each result row with multiple open ports shows a port dropdown (default: 3389 if open, else lowest open port)
-- [ ] AC5: Display name = hostname if resolved, otherwise IP address
+- [ ] AC4: Each result row shows a single port (first open port for its protocol); hosts with both RDP and SSH get separate rows
+- [ ] AC5: Display name = hostname if resolved, otherwise IP address; suffix "(RDP)"/"(SSH)" when both protocols open
 - [ ] AC6: Imported entries appear immediately in the tree
 - [ ] AC7: Hosts already in DB (green rows) have checkboxes disabled — cannot be imported again
 - [ ] AC8: Imported entries are created with no credentials (inherit from parent folder)
@@ -120,16 +125,18 @@ Allows users to scan an IP range (CIDR notation) for hosts with open RDP ports. 
 | FR-109-01 | Toolbar "Scan" button opens non-modal `NetworkScanWindow` (singleton) | Must |
 | FR-109-02 | CIDR input field with live range translation | Must |
 | FR-109-03 | CIDR validation: reject invalid notation, reject ranges > /16, confirm ranges > /20 | Must |
-| FR-109-04 | Default port field (3389) + additional ports field (semicolon-separated, validated 1-65535, deduped) | Must |
+| FR-109-04 | Default port field (3389) + additional ports field (semicolon-separated, validated 1-65535, deduped, pre-filled with `22` for SSH) | Must |
 | FR-109-05 | Configurable timeout per port (default 1500ms, range 200-10000ms) | Must |
 | FR-109-06 | TCP connect scan — no ICMP (avoids blocked ping) | Must |
 | FR-109-07 | 16-host concurrency via `SemaphoreSlim` | Must |
 | FR-109-08 | Reverse DNS lookup (`Dns.GetHostEntryAsync`) — silent failure, fallback to IP | Must |
 | FR-109-09 | Determinate progress bar (X/N) with Cancel via `CancellationTokenSource` | Must |
-| FR-109-10 | Results DataGrid: checkbox, IP, hostname, open ports, port dropdown, status | Must |
-| FR-109-11 | Existing-host detection: case-insensitive match against `ConnectionEntry.HostName` (IP, short hostname, FQDN) | Must |
+| FR-109-10 | Results DataGrid: checkbox, IP, hostname, protocol, port, status | Must |
+| FR-109-10a | Protocol-aware row splitting: ports 22/2222 → SSH row, other ports → RDP row; suffix "(RDP)"/"(SSH)" when both | Must |
+| FR-109-10b | `CidrParser.SshPorts` constant (`HashSet<int> { 22, 2222 }`) for SSH port identification | Must |
+| FR-109-11 | Existing-host detection: protocol-aware, case-insensitive match against `ConnectionEntry.HostName` + `ConnectionType` (IP, short hostname, FQDN) | Must |
 | FR-109-12 | Green + "Exists" label = in DB, Blue + "New" label = not in DB (color + text for accessibility) | Must |
-| FR-109-13 | "Import Selected" creates `ConnectionEntry` per selected host in chosen folder via `TreeService` | Must |
+| FR-109-13 | "Import Selected" creates `ConnectionEntry` per selected row in chosen folder via `TreeService` with correct `ConnectionType` (RDP or SSH) | Must |
 | FR-109-14 | Duplicate prevention: disable checkboxes on green/existing rows | Must |
 | FR-109-15 | "Select All New" button to check all blue/new rows | Must |
 | FR-109-16 | Sortable DataGrid columns (IP, hostname, ports, status) | Should |
@@ -157,7 +164,7 @@ Allows users to scan an IP range (CIDR notation) for hosts with open RDP ports. 
 │  │                   (254 hosts)                          │ │
 │  │                                                        │ │
 │  │ Port:          [ 3389    ]   Timeout: [ 1500 ] ms      │ │
-│  │ Additional:    [ 3390;5985;22                     ]    │ │
+│  │ Additional:    [ 22                               ]    │ │
 │  │                                                        │ │
 │  │ ⚠ Network scanning may trigger security alerts.        │ │
 │  │   Ensure you have authorization before scanning.       │ │
@@ -167,16 +174,14 @@ Allows users to scan an IP range (CIDR notation) for hosts with open RDP ports. 
 │  └────────────────────────────────────────────────────────┘ │
 │                                                             │
 │  Results (12 hosts found)           [ Select All New ]      │
-│  ┌──┬────────────────┬──────────────┬───────┬──────┬──────┐ │
-│  │☑ │ IP Address     │ Hostname     │ Ports │ Port │Status│ │
-│  ├──┼────────────────┼──────────────┼───────┼──────┼──────┤ │
-│  │░░│ 192.168.1.10   │ web-srv-01   │ 3389  │      │🟢 DB │ │
-│  │☑ │ 192.168.1.22   │ db-srv-01    │ 3389  │ 3389 │🔵New │ │
-│  │☐ │ 192.168.1.55   │ 192.168.1.55 │ 3389, │[▼3389│🔵New │ │
-│  │  │                │              │ 5985  │      │      │ │
-│  │░░│ 192.168.1.100  │ jump-host    │ 3389, │      │🟢 DB │ │
-│  │  │                │              │ 5985  │      │      │ │
-│  └──┴────────────────┴──────────────┴───────┴──────┴──────┘ │
+│  ┌──┬────────────────┬──────────────────┬────────┬──────┬──────┐ │
+│  │☑ │ IP Address     │ Hostname         │Protocol│ Port │Status│ │
+│  ├──┼────────────────┼──────────────────┼────────┼──────┼──────┤ │
+│  │░░│ 192.168.1.10   │ web-srv-01 (RDP) │ RDP    │ 3389 │🟢 DB │ │
+│  │☑ │ 192.168.1.10   │ web-srv-01 (SSH) │ SSH    │  22  │🔵New │ │
+│  │☑ │ 192.168.1.22   │ db-srv-01        │ RDP    │ 3389 │🔵New │ │
+│  │░░│ 192.168.1.100  │ jump-host        │ SSH    │  22  │🟢 DB │ │
+│  └──┴────────────────┴──────────────────┴────────┴──────┴──────┘ │
 │  ░░ = checkbox disabled (host already exists in DB)         │
 │                                                             │
 │  Import to: [ ▼ (Root)              ]  [Import Selected (1)]│
@@ -189,9 +194,9 @@ Allows users to scan an IP range (CIDR notation) for hosts with open RDP ports. 
 |-------|---------|
 | Before first scan | Results area: "Run a scan to discover hosts on your network" |
 | Scan in progress | Progress bar active, Cancel button enabled, Start Scan disabled |
-| Scan complete, results found | DataGrid populated, "X hosts found" header |
+| Scan complete, results found | DataGrid populated, "X result(s) found" header |
 | Scan complete, no results | "No hosts found. The range may be unreachable or ports may be blocked." |
-| Scan cancelled | Partial results shown, "Scan cancelled. X hosts found (Y / Z scanned)" |
+| Scan cancelled | Partial results shown, "Scan cancelled. X result(s) found (Y / Z scanned)" |
 
 ### 4.3 Status Indicators (Color + Text)
 
@@ -269,14 +274,14 @@ NetworkScanWindow (View — Presentation)
 
 ### 5.5 Existing Host Detection
 
-Query all `ConnectionEntry.HostName` values from DB into a `HashSet<string>` (case-insensitive via `StringComparer.OrdinalIgnoreCase`).
+Query all `ConnectionEntry.HostName` and `ConnectionType` values from DB into a `HashSet<(string Host, ConnectionType Protocol)>` (hosts stored as lowercase).
 
-For each discovered host, check membership against:
-1. **Exact IP match** — e.g. "192.168.1.10"
-2. **Resolved hostname match** — e.g. "web-srv-01"
-3. **FQDN-to-short-name match** — if DNS returns "web-srv-01.domain.local", also check "web-srv-01" (strip after first dot)
+For each discovered row, check membership against the row's protocol:
+1. **Exact IP match** — e.g. ("192.168.1.10", RDP)
+2. **Resolved hostname match** — e.g. ("web-srv-01", SSH)
+3. **FQDN-to-short-name match** — if DNS returns "web-srv-01.domain.local", also check ("web-srv-01", protocol)
 
-A match on any of these marks the result as "Exists."
+A match on any of these marks the result as "Exists." The same host can exist as both RDP and SSH independently.
 
 ### 5.6 Port Validation Rules
 
@@ -301,10 +306,11 @@ A match on any of these marks the result as "Exists."
 
 ```csharp
 public async Task<ConnectionEntry> CreateConnectionAsync(
-    string name, string hostName, Guid? parentId = null, int port = 3389)
+    string name, string hostName, Guid? parentId = null,
+    int port = 3389, ConnectionType connectionType = ConnectionType.RDP)
 ```
 
-This allows the scan import to create entries with the user-selected port without bypassing the service layer.
+This allows the scan import to create entries with the user-selected port and correct protocol without bypassing the service layer.
 
 ### 5.9 DI Registration
 
@@ -432,3 +438,4 @@ Follow existing project pattern (`Serilog.Log`):
 - FEAT-005: Tree CRUD — for creating imported connection entries
 - FEAT-011: RDP sessions — connections created by import use standard RDP flow
 - FEAT-013: Credential inheritance — imported entries inherit credentials from parent folder
+- FEAT-111: SSH Terminal Connections — scanner creates SSH entries with `ConnectionType.SSH` for ports 22/2222

@@ -4,6 +4,8 @@ namespace JustRDP.Application.Services;
 
 public static class CidrParser
 {
+    public static readonly HashSet<int> SshPorts = [22, 2222];
+
     public record CidrParseResult(bool IsValid, string? Error, IPAddress? First, IPAddress? Last, int HostCount, bool RequiresConfirmation);
 
     public static CidrParseResult ParseRange(string cidr)

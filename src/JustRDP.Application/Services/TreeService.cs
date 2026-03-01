@@ -1,4 +1,5 @@
 using JustRDP.Domain.Entities;
+using JustRDP.Domain.Enums;
 using JustRDP.Domain.Interfaces;
 
 namespace JustRDP.Application.Services;
@@ -31,7 +32,9 @@ public class TreeService
         return folder;
     }
 
-    public async Task<ConnectionEntry> CreateConnectionAsync(string name, string hostName, Guid? parentId = null, int port = 3389)
+    public async Task<ConnectionEntry> CreateConnectionAsync(
+        string name, string hostName, Guid? parentId = null,
+        int port = 3389, ConnectionType connectionType = ConnectionType.RDP)
     {
         var sortOrder = await _repository.GetNextSortOrderAsync(parentId);
         var connection = new ConnectionEntry
@@ -40,7 +43,8 @@ public class TreeService
             HostName = hostName,
             Port = port,
             ParentId = parentId,
-            SortOrder = sortOrder
+            SortOrder = sortOrder,
+            ConnectionType = connectionType
         };
         await _repository.AddAsync(connection);
         return connection;

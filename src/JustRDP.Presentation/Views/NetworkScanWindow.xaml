@@ -93,7 +93,7 @@
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Additional:" VerticalAlignment="Center" Margin="0,4,12,0" />
                 <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
                          Text="{Binding AdditionalPorts, UpdateSourceTrigger=PropertyChanged}"
-                         materialDesign:HintAssist.Hint="e.g. 3390;5985;22"
+                         materialDesign:HintAssist.Hint="e.g. 2222;5985;3390"
                          materialDesign:HintAssist.IsFloating="False"
                          IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBool}}"
                          Margin="0,4,0,0" />
@@ -212,18 +212,8 @@
                     </DataGridTemplateColumn>
                     <DataGridTextColumn Header="IP Address" Binding="{Binding IpAddress}" Width="140" IsReadOnly="True" />
                     <DataGridTextColumn Header="Hostname" Binding="{Binding HostName}" Width="*" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Open Ports" Binding="{Binding OpenPortsDisplay}" Width="100" IsReadOnly="True" />
-                    <DataGridTemplateColumn Header="Port" Width="80" CanUserSort="False">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <ComboBox ItemsSource="{Binding OpenPorts}"
-                                          SelectedItem="{Binding SelectedPort, UpdateSourceTrigger=PropertyChanged}"
-                                          IsEnabled="{Binding CanCheck}"
-                                          materialDesign:TextFieldAssist.DecorationVisibility="Collapsed"
-                                          Padding="4,2" FontSize="12" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Protocol" Binding="{Binding ProtocolDisplay}" Width="70" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Port" Binding="{Binding SelectedPort}" Width="60" IsReadOnly="True" />
                     <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="70" IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>

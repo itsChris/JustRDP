@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using JustRDP.Application.Services;
 using JustRDP.Domain.Entities;
+using JustRDP.Domain.Enums;
 using JustRDP.Domain.Interfaces;
 using Serilog;
 
@@ -20,7 +21,7 @@ public partial class NetworkScanViewModel : ObservableObject
     private CancellationTokenSource? _cts;
     private DispatcherTimer? _batchTimer;
     private readonly ConcurrentQueue<ScanResultRow> _pendingResults = new();
-    private HashSet<string> _existingHosts = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<(string Host, ConnectionType Protocol)> _existingHosts = [];
     private bool _wasCancelled;
 
     [ObservableProperty]
@@ -30,7 +31,7 @@ public partial class NetworkScanViewModel : ObservableObject
     private int _defaultPort = 3389;
 
     [ObservableProperty]
-    private string _additionalPorts = string.Empty;
+    private string _additionalPorts = "22";
 
     [ObservableProperty]
     private int _timeoutMs = 1500;
@@ -223,11 +224,11 @@ public partial class NetworkScanViewModel : ObservableObject
 
             if (_wasCancelled)
             {
-                ResultsHeader = $"Scan cancelled. {Results.Count} host(s) found ({Progress} / {ProgressMax} scanned)";
+                ResultsHeader = $"Scan cancelled. {Results.Count} result(s) found ({Progress} / {ProgressMax} scanned)";
             }
             else if (Results.Count > 0)
             {
-                ResultsHeader = $"{Results.Count} host(s) found";
+                ResultsHeader = $"{Results.Count} result(s) found";
             }
             else
             {
@@ -241,9 +242,23 @@ public partial class NetworkScanViewModel : ObservableObject
 
     private void OnHostScanned(NetworkScanResult sr)
     {
-        var exists = CheckHostExists(sr.IpAddress.ToString(), sr.HostName);
-        var row = new ScanResultRow(sr.IpAddress, sr.HostName, sr.OpenPorts, exists, this);
-        _pendingResults.Enqueue(row);
+        var sshPorts = sr.OpenPorts.Where(p => CidrParser.SshPorts.Contains(p)).ToList();
+        var rdpPorts = sr.OpenPorts.Where(p => !CidrParser.SshPorts.Contains(p)).ToList();
+        var hasBoth = sshPorts.Count > 0 && rdpPorts.Count > 0;
+
+        if (rdpPorts.Count > 0)
+        {
+            var name = hasBoth ? $"{sr.HostName} (RDP)" : sr.HostName;
+            var exists = CheckHostExists(sr.IpAddress.ToString(), sr.HostName, ConnectionType.RDP);
+            _pendingResults.Enqueue(new ScanResultRow(sr.IpAddress, name, rdpPorts, exists, ConnectionType.RDP, this));
+        }
+
+        if (sshPorts.Count > 0)
+        {
+            var name = hasBoth ? $"{sr.HostName} (SSH)" : sr.HostName;
+            var exists = CheckHostExists(sr.IpAddress.ToString(), sr.HostName, ConnectionType.SSH);
+            _pendingResults.Enqueue(new ScanResultRow(sr.IpAddress, name, sshPorts, exists, ConnectionType.SSH, this));
+        }
     }
 
     [RelayCommand]
@@ -276,12 +291,12 @@ public partial class NetworkScanViewModel : ObservableObject
         {
             var name = row.HostName != row.IpAddress.ToString() ? row.HostName : row.IpAddress.ToString();
             var port = row.SelectedPort;
-            await _treeService.CreateConnectionAsync(name, row.IpAddress.ToString(), parentId, port);
+            await _treeService.CreateConnectionAsync(name, row.IpAddress.ToString(), parentId, port, row.Protocol);
             row.ExistsInDatabase = true;
             row.IsChecked = false;
-            _existingHosts.Add(row.IpAddress.ToString());
+            _existingHosts.Add((row.IpAddress.ToString().ToLowerInvariant(), row.Protocol));
             if (row.HostName != row.IpAddress.ToString())
-                _existingHosts.Add(row.HostName);
+                _existingHosts.Add((row.HostName.ToLowerInvariant(), row.Protocol));
         }
 
         OnPropertyChanged(nameof(SelectedCount));
@@ -311,23 +326,23 @@ public partial class NetworkScanViewModel : ObservableObject
     private async Task LoadExistingHostsAsync()
     {
         var allEntries = await _repository.GetAllAsync();
-        _existingHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        _existingHosts = [];
         foreach (var entry in allEntries.OfType<ConnectionEntry>())
         {
             if (!string.IsNullOrWhiteSpace(entry.HostName))
-                _existingHosts.Add(entry.HostName);
+                _existingHosts.Add((entry.HostName.ToLowerInvariant(), entry.ConnectionType));
         }
     }
 
-    private bool CheckHostExists(string ip, string hostName)
+    private bool CheckHostExists(string ip, string hostName, ConnectionType protocol)
     {
-        if (_existingHosts.Contains(ip))
+        if (_existingHosts.Contains((ip.ToLowerInvariant(), protocol)))
             return true;
-        if (_existingHosts.Contains(hostName))
+        if (_existingHosts.Contains((hostName.ToLowerInvariant(), protocol)))
             return true;
         // FQDN to short name
         var dot = hostName.IndexOf('.');
-        if (dot > 0 && _existingHosts.Contains(hostName[..dot]))
+        if (dot > 0 && _existingHosts.Contains((hostName[..dot].ToLowerInvariant(), protocol)))
             return true;
         return false;
     }
@@ -339,7 +354,8 @@ public partial class NetworkScanViewModel : ObservableObject
         public IPAddress IpAddress { get; }
         public string HostName { get; }
         public List<int> OpenPorts { get; }
-        public string OpenPortsDisplay => string.Join(", ", OpenPorts);
+        public ConnectionType Protocol { get; }
+        public string ProtocolDisplay => Protocol.ToString();
 
         [ObservableProperty]
         private bool _isChecked;
@@ -361,14 +377,15 @@ public partial class NetworkScanViewModel : ObservableObject
             OnPropertyChanged(nameof(CanCheck));
         }
 
-        public ScanResultRow(IPAddress ip, string hostName, List<int> openPorts, bool exists, NetworkScanViewModel parent)
+        public ScanResultRow(IPAddress ip, string hostName, List<int> openPorts, bool exists, ConnectionType protocol, NetworkScanViewModel parent)
         {
             _parent = parent;
             IpAddress = ip;
             HostName = hostName;
             OpenPorts = openPorts;
             ExistsInDatabase = exists;
-            SelectedPort = openPorts.Contains(3389) ? 3389 : openPorts.FirstOrDefault();
+            Protocol = protocol;
+            SelectedPort = openPorts.First();
         }
     }
 
