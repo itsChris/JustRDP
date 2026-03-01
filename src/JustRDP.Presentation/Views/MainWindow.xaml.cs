@@ -46,7 +46,6 @@ public partial class MainWindow : Window
         await _settings.SetAsync("Window.Height", bounds.Height.ToString(CultureInfo.InvariantCulture));
         await _settings.SetAsync("Window.State", WindowState.ToString());
         await _settings.SetAsync("Window.TreeWidth", TreeColumn.Width.Value.ToString(CultureInfo.InvariantCulture));
-        await _settings.SetAsync("Window.PropertiesWidth", PropertiesColumn.Width.Value.ToString(CultureInfo.InvariantCulture));
     }
 
     private async Task RestoreWindowStateAsync()
@@ -80,12 +79,9 @@ public partial class MainWindow : Window
         }
 
         var treeWidth = await _settings.GetAsync("Window.TreeWidth");
-        var propsWidth = await _settings.GetAsync("Window.PropertiesWidth");
 
         if (double.TryParse(treeWidth, CultureInfo.InvariantCulture, out var tw) && tw >= 150)
             TreeColumn.Width = new GridLength(tw);
-        if (double.TryParse(propsWidth, CultureInfo.InvariantCulture, out var pw) && pw >= 150)
-            PropertiesColumn.Width = new GridLength(pw);
     }
 
     private static bool IsRectOnAnyScreen(Rect rect)
