@@ -52,6 +52,12 @@
                 <!-- Right: settings -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="8,0,0,0">
                     <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
+                            ToolTip="Open Log Folder"
+                            Command="{Binding OpenLogFolderCommand}"
+                            Padding="8,4" Height="32">
+                        <materialDesign:PackIcon Kind="FolderFileOutline" />
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
                             ToolTip="Toggle Theme"
                             Command="{Binding ToggleThemeCommand}"
                             Padding="8,4" Height="32">
@@ -144,11 +150,11 @@
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250" MinWidth="150" />
+                <ColumnDefinition x:Name="TreeColumn" Width="250" MinWidth="150" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="250" MinWidth="150" />
+                <ColumnDefinition x:Name="PropertiesColumn" Width="250" MinWidth="150" />
             </Grid.ColumnDefinitions>
 
             <!-- Tree View Panel -->
@@ -295,17 +301,23 @@
                                 ItemsSource="{Binding OpenTabs}"
                                 SelectedItem="{Binding SelectedTab}"
                                 BorderThickness="0">
+                        <TabControl.ItemContainerStyle>
+                            <Style TargetType="TabItem" BasedOn="{StaticResource MaterialDesignTabItem}">
+                                <Setter Property="Padding" Value="8,2" />
+                                <Setter Property="Height" Value="28" />
+                            </Style>
+                        </TabControl.ItemContainerStyle>
                         <TabControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding TabTitle}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding TabTitle}" VerticalAlignment="Center" FontSize="12" />
                                     <Button ToolTip="Close Tab (Ctrl+W)"
                                             Command="{Binding DataContext.CloseTabCommand, Source={x:Reference ThisWindow}}"
                                             CommandParameter="{Binding}"
                                             Style="{StaticResource MaterialDesignToolForegroundButton}"
-                                            Padding="0" Margin="8,0,0,0"
-                                            Width="18" Height="18">
-                                        <materialDesign:PackIcon Kind="Close" Width="14" Height="14" />
+                                            Padding="0" Margin="6,0,0,0"
+                                            Width="16" Height="16">
+                                        <materialDesign:PackIcon Kind="Close" Width="12" Height="12" />
                                     </Button>
                                 </StackPanel>
                             </DataTemplate>
