@@ -92,6 +92,7 @@ public partial class MainWindowViewModel : ObservableObject
         _logger.LogInformation("Opening connection {Name} ({Host}:{Port})", connection.Name, connection.HostName, connection.Port);
         var credential = await _credentialService.ResolveCredentialAsync(connection);
         var tabVm = new ConnectionTabViewModel(connection, credential);
+        tabVm.CloseRequested += tab => CloseTab(tab);
         OpenTabs.Add(tabVm);
         SelectedTab = tabVm;
         OpenTabCount = OpenTabs.Count;

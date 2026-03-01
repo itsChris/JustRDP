@@ -39,6 +39,8 @@ public partial class ConnectionTabViewModel : ObservableObject
 
     public Guid ConnectionId => _connection.Id;
 
+    public event Action<ConnectionTabViewModel>? CloseRequested;
+
     public ConnectionTabViewModel(ConnectionEntry connection, Credential credential)
     {
         _connection = connection;
@@ -213,6 +215,10 @@ public partial class ConnectionTabViewModel : ObservableObject
                 HasError = true;
                 ErrorMessage = $"Disconnected with code {args.DisconnectCode}: {args.Description}";
             }
+
+            // Close the tab when the user logs off / disconnects from the remote session
+            Log.Debug("[RDP] Requesting tab close after disconnect (code {Code})", args.DisconnectCode);
+            CloseRequested?.Invoke(this);
         });
     }
 
