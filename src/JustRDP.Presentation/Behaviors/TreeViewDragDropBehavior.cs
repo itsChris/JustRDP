@@ -117,20 +117,22 @@ public static class TreeViewDragDropBehavior
         if (treeViewModel is null) return;
 
         Guid? newParentId;
-        int newSortOrder;
+        int insertIndex;
 
         if (target.EntryType == Domain.Enums.TreeEntryType.Folder)
         {
+            // Drop onto a folder: append as last child
             newParentId = target.Id;
-            newSortOrder = target.Children.Count;
+            insertIndex = target.Children.Count;
         }
         else
         {
+            // Drop onto a connection: insert after it among its siblings
             newParentId = target.ParentId;
-            newSortOrder = target.SortOrder + 1;
+            insertIndex = target.SortOrder + 1;
         }
 
-        await treeViewModel.MoveEntryAsync(draggedItem, newParentId, newSortOrder);
+        await treeViewModel.MoveEntryAsync(draggedItem, newParentId, insertIndex);
     }
 
     private static bool IsDescendant(TreeEntryViewModel parent, TreeEntryViewModel potentialChild)

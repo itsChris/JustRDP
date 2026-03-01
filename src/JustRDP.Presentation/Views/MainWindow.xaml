@@ -162,6 +162,11 @@
                                                               CommandParameter="{Binding}"
                                                               Icon="{materialDesign:PackIcon Kind=PlayCircleOutline}"
                                                               Visibility="{Binding IsFolder, Converter={StaticResource BoolToVis}}" />
+                                                    <MenuItem Header="Sort Alphabetically"
+                                                              Command="{Binding DataContext.TreeVM.SortChildrenCommand, Source={x:Reference ThisWindow}}"
+                                                              CommandParameter="{Binding}"
+                                                              Icon="{materialDesign:PackIcon Kind=SortAlphabeticalAscending}"
+                                                              Visibility="{Binding IsFolder, Converter={StaticResource BoolToVis}}" />
                                                     <Separator Visibility="{Binding IsFolder, Converter={StaticResource BoolToVis}}" />
                                                     <MenuItem Header="New Folder"
                                                               Command="{Binding DataContext.TreeVM.AddFolderCommand, Source={x:Reference ThisWindow}}"

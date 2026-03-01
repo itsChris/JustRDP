@@ -113,6 +113,24 @@ public partial class TreeViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task SortChildren(TreeEntryViewModel? entry)
+    {
+        if (entry is null || !entry.IsFolder) return;
+
+        var sorted = entry.Children.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        entry.Children.Clear();
+        for (var i = 0; i < sorted.Count; i++)
+        {
+            sorted[i].SortOrder = i;
+            sorted[i].Entity.SortOrder = i;
+            entry.Children.Add(sorted[i]);
+        }
+
+        var updates = sorted.Select((s, i) => (s.Id, i)).ToList();
+        await _treeService.UpdateSortOrderAsync(updates);
+    }
+
+    [RelayCommand]
     private async Task DuplicateConnection(TreeEntryViewModel? entry)
     {
         if (entry?.Entity is not ConnectionEntry source) return;
@@ -159,27 +177,51 @@ public partial class TreeViewModel : ObservableObject
         }
     }
 
-    public async Task MoveEntryAsync(TreeEntryViewModel entry, Guid? newParentId, int newSortOrder)
+    public async Task MoveEntryAsync(TreeEntryViewModel entry, Guid? newParentId, int insertIndex)
     {
-        // Remove from old location
+        // Remove from old parent
+        var oldParentId = entry.ParentId;
         RemoveFromTree(entry);
+
+        // Re-sequence old siblings so there are no gaps
+        if (oldParentId != newParentId)
+        {
+            var oldSiblings = GetSiblings(oldParentId);
+            UpdateSortOrdersInMemory(oldSiblings);
+            await _treeService.UpdateSortOrderAsync(oldSiblings.Select((s, i) => (s.Id, i)).ToList());
+        }
 
         // Update entity
         entry.ParentId = newParentId;
-        entry.SortOrder = newSortOrder;
         entry.Entity.ParentId = newParentId;
-        entry.Entity.SortOrder = newSortOrder;
 
-        // Add to new location
-        AddToTree(entry, newParentId);
+        // Insert at specific position in new parent
+        var newSiblings = GetSiblings(newParentId);
+        var clampedIndex = Math.Min(insertIndex, newSiblings.Count);
+        newSiblings.Insert(clampedIndex, entry);
+
+        if (newParentId.HasValue)
+        {
+            var parent = FindEntry(newParentId.Value, RootEntries);
+            if (parent is not null)
+                parent.IsExpanded = true;
+        }
+
+        // Re-sequence all siblings in new parent
+        UpdateSortOrdersInMemory(newSiblings);
 
         // Persist
         await _treeService.UpdateAsync(entry.Entity);
+        await _treeService.UpdateSortOrderAsync(newSiblings.Select((s, i) => (s.Id, i)).ToList());
+    }
 
-        // Update sort orders for siblings
-        var siblings = GetSiblings(newParentId);
-        var updates = siblings.Select((s, i) => (s.Id, i)).ToList();
-        await _treeService.UpdateSortOrderAsync(updates);
+    private static void UpdateSortOrdersInMemory(ObservableCollection<TreeEntryViewModel> siblings)
+    {
+        for (var i = 0; i < siblings.Count; i++)
+        {
+            siblings[i].SortOrder = i;
+            siblings[i].Entity.SortOrder = i;
+        }
     }
 
     public async Task SaveExpandedStateAsync(TreeEntryViewModel entry)
