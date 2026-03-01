@@ -1,10 +1,11 @@
 # Backlog
 
-## BUG-001: DuplicateConnectionAsync does not copy ConnectionType or SSH fields
+## ~~BUG-001: DuplicateConnectionAsync does not copy ConnectionType or SSH fields~~ (FIXED)
 
 **Severity:** Medium
 **Introduced in:** FEAT-111 (SSH Terminal Connections)
 **Discovered during:** FEAT-109 SSH protocol support review
+**Status:** Fixed
 
 ### Description
 

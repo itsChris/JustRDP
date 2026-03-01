@@ -105,7 +105,14 @@ public class TreeService
             GatewayPasswordEncrypted = source.GatewayPasswordEncrypted is not null
                 ? (byte[])source.GatewayPasswordEncrypted.Clone()
                 : null,
-            Notes = source.Notes
+            Notes = source.Notes,
+            ConnectionType = source.ConnectionType,
+            SshPrivateKeyPath = source.SshPrivateKeyPath,
+            SshPrivateKeyPassphraseEncrypted = source.SshPrivateKeyPassphraseEncrypted is not null
+                ? (byte[])source.SshPrivateKeyPassphraseEncrypted.Clone()
+                : null,
+            SshTerminalFontFamily = source.SshTerminalFontFamily,
+            SshTerminalFontSize = source.SshTerminalFontSize
         };
         await _repository.AddAsync(duplicate);
         return duplicate;
