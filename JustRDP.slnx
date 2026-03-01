@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JustRDP.Application/JustRDP.Application.csproj" />
+    <Project Path="src/JustRDP.Domain/JustRDP.Domain.csproj" />
+    <Project Path="src/JustRDP.Infrastructure/JustRDP.Infrastructure.csproj" />
+    <Project Path="src/JustRDP.Presentation/JustRDP.Presentation.csproj" />
+  </Folder>
+</Solution>
