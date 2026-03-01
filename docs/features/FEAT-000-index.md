@@ -6,7 +6,7 @@
 |-----------|-------|
 | **Project** | JustRDP |
 | **Type** | WPF Desktop Application |
-| **Tech Stack** | .NET 10, WPF, WinForms (interop), EF Core + SQLite, MaterialDesignThemes, Dragablz, CommunityToolkit.Mvvm, RoyalApps.Community.Rdp.WinForms |
+| **Tech Stack** | .NET 10, WPF, WinForms (interop), EF Core + SQLite, MaterialDesignThemes, Dragablz, CommunityToolkit.Mvvm, RoyalApps.Community.Rdp.WinForms, SSH.NET, VtNetCore |
 | **PRD** | `docs/PRD.md` |
 
 ---
@@ -31,7 +31,8 @@
 | §7 | Security | FEAT-003 |
 | §8 | Data Storage | FEAT-001 |
 | §5.6 | Network Scan | FEAT-109 |
-| §9.2 | Post-MVP | FEAT-101 through FEAT-109 |
+| §5.10 | SSH Terminal Connections | FEAT-111 |
+| §9.2 | Post-MVP | FEAT-101 through FEAT-111 |
 | §10 | Non-Functional Requirements | Cross-cutting |
 
 ---
@@ -61,6 +62,7 @@
 | FEAT-105 | Bulk Operations (Multi-Select) | FEAT-005 | §9.2 | **Partial** (bulk connect via checkboxes) |
 | FEAT-107 | Connection History & Recents | FEAT-011 | §9.2 | Planned |
 | FEAT-109 | Network Scan (IP Range Discovery) | FEAT-005, FEAT-011 | — | **Done** |
+| FEAT-111 | SSH Terminal Connections | FEAT-001, FEAT-003, FEAT-005, FEAT-009, FEAT-011 | §5.10 | **Planned** |
 
 ---
 

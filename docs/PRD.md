@@ -32,6 +32,8 @@ JustRDP is a WPF-based RDP connection manager inspired by Royal TS V7. It allows
 | ORM | Microsoft.EntityFrameworkCore.Sqlite | 10.0.* |
 | DI | Microsoft.Extensions.Hosting | 10.0.* |
 | Encryption | System.Security.Cryptography.ProtectedData (DPAPI) | 10.0.* |
+| SSH | SSH.NET (Renci.SshNet) | 2025.1.0 |
+| Terminal Emulation | VtNetCore | 1.0.9 |
 
 ---
 
@@ -81,8 +83,9 @@ Clean Architecture with 4 projects:
 ### 4.3 ConnectionEntry (extends TreeEntry)
 | Property | Type | Description |
 |---|---|---|
-| HostName | string | RDP server hostname/IP |
-| Port | int | RDP port (default 3389) |
+| ConnectionType | ConnectionType | RDP (default) or SSH |
+| HostName | string | Server hostname/IP |
+| Port | int | Port (default 3389 for RDP, 22 for SSH) |
 | CredentialUsername | string? | Optional own credentials |
 | CredentialDomain | string? | Optional own domain |
 | CredentialPasswordEncrypted | byte[]? | DPAPI-encrypted password |
@@ -105,6 +108,10 @@ Clean Architecture with 4 projects:
 | GatewayDomain | string? | Gateway domain |
 | GatewayPasswordEncrypted | byte[]? | Gateway password |
 | Notes | string? | Free-text notes |
+| SshPrivateKeyPath | string? | Path to SSH private key file |
+| SshPrivateKeyPassphraseEncrypted | byte[]? | DPAPI-encrypted key passphrase |
+| SshTerminalFontFamily | string? | Terminal font (default "Consolas") |
+| SshTerminalFontSize | double? | Terminal font size (default 14) |
 
 ### 4.4 Credential (Value Object)
 | Property | Type | Description |
@@ -279,6 +286,44 @@ Supported keys:
 - Loaded on startup before main window shown
 - `ThemeManager` service handles load/save/apply
 
+### 5.10 SSH Terminal Connections
+
+#### 5.10.1 Connection Type
+- `ConnectionEntry` has a `ConnectionType` enum: `RDP` (default) or `SSH`
+- Selectable in the Properties dialog via a "Type" dropdown on the General tab
+- When type is SSH, RDP-specific tabs (Display, Redirection, Connection/Gateway) are hidden
+- SSH-specific fields shown: Private Key Path (file picker), Private Key Passphrase, Terminal Font Family/Size
+
+#### 5.10.2 SSH Authentication
+- Password authentication via existing credential system (credential inheritance applies)
+- Private key authentication with optional DPAPI-encrypted passphrase
+- Private key path stored on `ConnectionEntry.SshPrivateKeyPath`
+
+#### 5.10.3 SSH Terminal
+- Fully native WPF terminal control (no browser, no external processes)
+- Based on SSH.NET (connection) + VtNetCore (terminal emulation)
+- xterm-256color support with VS Code Dark color palette
+- Full keyboard support: arrow keys, function keys, Ctrl+key sequences, Tab, copy/paste
+- Terminal resize with debounced SSH window change request
+- Scrollback buffer with mouse wheel scrolling
+- Text selection via mouse drag + clipboard copy
+- CompositionTarget.Rendering for ~60fps rendering (only when dirty)
+
+#### 5.10.4 SSH Tab Lifecycle
+- Double-click SSH connection → opens terminal tab (same pattern as RDP)
+- Tab auto-closes on disconnect (matching RDP behavior)
+- Multiple SSH tabs can be open simultaneously
+- SSH and RDP tabs coexist in the same tab bar
+
+#### 5.10.5 Visual Distinction
+- Tree icons: `MonitorDashboard` for RDP, `Console` for SSH
+- Availability monitor works for both types (ICMP + TCP on configured port)
+
+#### 5.10.6 Quick Connect
+- `ssh://user@host:port` prefix opens SSH terminal
+- `ssh://user@host` defaults port to 22
+- Non-prefixed addresses default to RDP (existing behavior)
+
 ### 5.8 Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -396,9 +441,12 @@ Supported keys:
 - **Connection search/filter** — real-time name filter above the tree (partial, see FEAT-103)
 - **Bulk operations (multi-select)** — checkbox-based multi-select with bulk connect (partial, see FEAT-105)
 
+#### In Progress
+- **SSH terminal connections** — native WPF terminal with SSH.NET + VtNetCore, password and private key auth, full xterm-256color support, auto-close on disconnect, Quick Connect with `ssh://` prefix (see FEAT-111)
+
 #### Planned
 - RD Gateway full support (credentials, auth methods) — schema in place, UI deferred
-- SSH/VNC/other protocol support
+- VNC/other protocol support
 - Multi-document (multiple .justrdp files)
 - Cloud sync / team sharing
 - Connection history / recent connections

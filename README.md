@@ -1,11 +1,12 @@
 # JustRDP
 
-A lightweight WPF-based RDP connection manager for Windows. Organize remote desktop connections in folders, connect via tabbed sessions, and manage credentials — all from a clean Material Design interface.
+A lightweight WPF-based remote connection manager for Windows. Organize RDP and SSH connections in folders, connect via tabbed sessions, and manage credentials — all from a clean Material Design interface.
 
 ## Features
 
 - **Tabbed RDP sessions** — open multiple connections side-by-side with independent tabs
-- **Quick Connect** — type a `host:port` in the toolbar and connect instantly without creating a tree entry
+- **SSH terminal sessions** *(planned)* — connect to Linux/Unix hosts with a built-in VT100/xterm terminal emulator (SSH.NET + VtNetCore); supports password and private-key authentication
+- **Quick Connect** — type a `host:port` in the toolbar and connect instantly without creating a tree entry; use `ssh://user@host:port` for SSH
 - **Folder organization** — group connections into folders with drag-and-drop reordering and alphabetical sorting
 - **Tree filter** — real-time search box above the tree to find connections by name
 - **Multi-select** — check multiple connections and connect to all of them at once
@@ -32,6 +33,14 @@ Each connection supports the full range of RDP options:
 | **Credentials** | Username, domain, password (with folder inheritance) |
 | **Input** | Keyboard hook mode, Windows key forwarding, accelerator passthrough |
 
+SSH connections *(planned)* support:
+
+| Category | Settings |
+|---|---|
+| **Connection** | Hostname, port (default 22), terminal type (xterm-256color) |
+| **Authentication** | Username, password, private key file (PEM/OpenSSH), optional passphrase |
+| **Terminal** | Font family, font size, color scheme, scrollback buffer |
+
 ## Tech Stack
 
 | Component | Technology |
@@ -39,6 +48,7 @@ Each connection supports the full range of RDP options:
 | Framework | .NET 10 |
 | UI | WPF + Material Design |
 | RDP | [RoyalApps.Community.Rdp.WinForms](https://github.com/royalapps/rdp) |
+| SSH | [SSH.NET](https://github.com/sshnet/SSH.NET) + [VtNetCore](https://github.com/nickvdyck/VtNetCore) *(planned)* |
 | MVVM | CommunityToolkit.Mvvm |
 | Database | SQLite via EF Core |
 | Encryption | Windows DPAPI |
