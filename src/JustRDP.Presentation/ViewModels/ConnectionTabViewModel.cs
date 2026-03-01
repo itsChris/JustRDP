@@ -125,6 +125,11 @@ public partial class ConnectionTabViewModel : ObservableObject
         config.Redirection.RedirectPorts = _connection.RedirectPorts;
         config.Redirection.AudioRedirectionMode = (AudioRedirectionMode)_connection.AudioRedirectionMode;
 
+        // Input — forward keyboard shortcuts (ALT combos, Windows key) to the remote session
+        config.Input.KeyboardHookMode = true;
+        config.Input.AcceleratorPassthrough = true;
+        config.Input.EnableWindowsKey = true;
+
         // Connection
         config.Connection.EnableAutoReconnect = _connection.AutoReconnect;
         config.Connection.Compression = _connection.Compression;
