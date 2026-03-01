@@ -97,6 +97,11 @@ Must alias: `Point`, `DragEventArgs`, `DragDropEffects`, `DataObject`, `DragDrop
 
 ---
 
-## 6. References
+## 6. Bug Fixes (2026-03-01)
+- **Stale sort orders**: After a move, in-memory `SortOrder` on ViewModels was not synced back from DB. Subsequent drags used stale values causing misordering. Fixed by adding `UpdateSortOrdersInMemory()` that syncs both VM and entity properties after every move.
+- **Orphaned gaps**: Moving between parents left gaps in the old parent's sort order sequence. Fixed by re-sequencing old parent siblings after removal.
+- **Insert logic**: Replaced `AddToTree` (always appends) with `Insert` at the correct index, so items land at the drop position.
+
+## 7. References
 - §5.1.3: Drag and Drop — Full specification
 - FEAT-005: Base tree view that this builds on

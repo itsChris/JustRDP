@@ -53,12 +53,12 @@
 
 ## Post-MVP Features
 
-| ID | Title | MVP Dependencies | PRD Sections |
-|----|-------|------------------|--------------|
-| FEAT-101 | RD Gateway Full Support | FEAT-011 | §9.2 |
-| FEAT-103 | Connection Search & Filter | FEAT-005 | §9.2 |
-| FEAT-105 | Bulk Operations (Multi-Select) | FEAT-005 | §9.2 |
-| FEAT-107 | Connection History & Recents | FEAT-011 | §9.2 |
+| ID | Title | MVP Dependencies | PRD Sections | Status |
+|----|-------|------------------|--------------|--------|
+| FEAT-101 | RD Gateway Full Support | FEAT-011 | §9.2 | Planned |
+| FEAT-103 | Connection Search & Filter | FEAT-005 | §9.2 | **Partial** (name filter implemented) |
+| FEAT-105 | Bulk Operations (Multi-Select) | FEAT-005 | §9.2 | **Partial** (bulk connect via checkboxes) |
+| FEAT-107 | Connection History & Recents | FEAT-011 | §9.2 | Planned |
 
 ---
 

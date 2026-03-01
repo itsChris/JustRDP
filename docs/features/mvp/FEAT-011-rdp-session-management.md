@@ -146,7 +146,21 @@ Implements the core RDP connection functionality. Users double-click a connectio
 
 ---
 
-## 7. References
+## 7. Enhancements (2026-03-01)
+
+### Auto-close on disconnect
+Tabs now close automatically when the remote session disconnects (user logoff, remote disconnection). Implemented via a `CloseRequested` event on `ConnectionTabViewModel` that fires at the end of the `OnDisconnected` handler. `MainWindowViewModel` subscribes to this event and routes it to `CloseTab()`.
+
+### Keyboard input forwarding
+Added RDP input configuration to forward keyboard shortcuts to the remote session:
+- `config.Input.KeyboardHookMode = true`
+- `config.Input.AcceleratorPassthrough = true`
+- `config.Input.EnableWindowsKey = true`
+
+### Quick Connect
+A toolbar text field allows ad-hoc connections by typing `host:port` without creating a persistent tree entry. Creates a temporary in-memory `ConnectionEntry` and opens an RDP tab.
+
+## 8. References
 - §5.3: RDP Connections — Full specification
 - FEAT-003: Credential decryption for password
 - FEAT-013: Resolves credentials before connection

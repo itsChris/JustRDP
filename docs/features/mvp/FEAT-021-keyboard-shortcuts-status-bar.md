@@ -78,6 +78,22 @@ Adds keyboard shortcuts for common actions and a status bar showing entry count 
 
 ---
 
-## 5. References
+## 5. Enhancements (2026-03-01)
+
+### Toolbar Redesign
+The toolbar was redesigned with labeled buttons using `MaterialDesignToolForegroundButton` style (auto-sizes to content). Layout:
+- **Left**: New Folder, New Connection (elevated `MaterialDesignFlatMidBgButton`), separator, Import, Export, separator, Quick Connect field + Connect button
+- **Right**: Open Log Folder, Theme, About
+
+### About Dialog
+Added `AboutDialog` modal window showing app version, "Made with heart in Switzerland", Solvia AG contact details (email, phone, website links).
+
+### Window State Persistence
+Window position, size, state (Normal/Maximized), tree panel width, and properties panel width are saved to the AppSettings DB table on close and restored on startup. Includes screen boundary validation to handle disconnected monitors.
+
+### Compact Tab Headers
+Tab header height reduced to 28px with smaller font size and close button to maximize RDP viewport space.
+
+## 6. References
 - §5.7: Keyboard Shortcuts — Key table
 - §5.8: Status Bar — Format specification

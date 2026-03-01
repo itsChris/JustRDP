@@ -5,12 +5,17 @@ A lightweight WPF-based RDP connection manager for Windows. Organize remote desk
 ## Features
 
 - **Tabbed RDP sessions** — open multiple connections side-by-side with independent tabs
-- **Folder organization** — group connections into folders with drag-and-drop reordering
+- **Quick Connect** — type a `host:port` in the toolbar and connect instantly without creating a tree entry
+- **Folder organization** — group connections into folders with drag-and-drop reordering and alphabetical sorting
+- **Tree filter** — real-time search box above the tree to find connections by name
+- **Multi-select** — check multiple connections and connect to all of them at once
 - **Credential inheritance** — set credentials on a folder and all child connections inherit them automatically
 - **DPAPI-encrypted passwords** — credentials are encrypted with Windows DPAPI (per-user scope), no external key management needed
 - **Import / Export** — import and export connections as JSON or standard `.rdp` files compatible with mstsc.exe
 - **Dark / Light theme** — toggle between themes with automatic persistence
 - **Keyboard shortcuts** — Ctrl+N (new connection), Ctrl+Shift+N (new folder), F2 (rename), Delete, Ctrl+W (close tab)
+- **Persistent layout** — window position, size, state, and panel widths are remembered across sessions
+- **Auto-close on disconnect** — tabs close automatically when the remote session ends
 
 ### Connection Settings
 

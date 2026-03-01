@@ -184,7 +184,18 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 ---
 
-## 7. References
+## 7. Enhancements (2026-03-01)
+
+### Sort Alphabetically
+Added "Sort Alphabetically" context menu item on folders (`SortChildrenCommand` in `TreeViewModel`). Sorts all direct children by name (case-insensitive) and persists the new sort order to the database.
+
+### Duplicate Connection
+Context menu on connections includes "Duplicate Connection" which clones a connection with all its properties.
+
+### Connect All
+Context menu on folders includes "Connect All" which opens RDP sessions for all child connections recursively.
+
+## 8. References
 - §5.1: Tree View — Full specification
 - FEAT-007: Adds drag-drop on top of this tree
 - FEAT-009: Properties panel uses selected entry from this tree
