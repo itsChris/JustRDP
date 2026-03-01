@@ -61,7 +61,8 @@
                         <materialDesign:PackIcon Kind="ThemeLightDark" />
                     </Button>
                     <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
-                            ToolTip="About">
+                            ToolTip="About"
+                            Command="{Binding ShowAboutCommand}">
                         <materialDesign:PackIcon Kind="InformationOutline" />
                     </Button>
                 </StackPanel>

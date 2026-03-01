@@ -140,6 +140,13 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ShowAbout()
+    {
+        var dialog = new Views.AboutDialog { Owner = System.Windows.Application.Current.MainWindow };
+        dialog.ShowDialog();
+    }
+
+    [RelayCommand]
     private async Task ToggleTheme()
     {
         IsDarkTheme = !IsDarkTheme;
