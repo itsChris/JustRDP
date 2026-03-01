@@ -11,6 +11,7 @@ A lightweight WPF-based RDP connection manager for Windows. Organize remote desk
 - **Multi-select** — check multiple connections and connect to all of them at once
 - **Credential inheritance** — set credentials on a folder and all child connections inherit them automatically
 - **DPAPI-encrypted passwords** — credentials are encrypted with Windows DPAPI (per-user scope), no external key management needed
+- **Network scan** — scan a CIDR range for RDP-enabled hosts, view results with existing-host detection, and selectively import discovered hosts into the tree
 - **Import / Export** — import and export connections as JSON or standard `.rdp` files compatible with mstsc.exe
 - **Dark / Light theme** — toggle between themes with automatic persistence
 - **Keyboard shortcuts** — Ctrl+N (new connection), Ctrl+Shift+N (new folder), F2 (rename), Delete, Ctrl+W (close tab)

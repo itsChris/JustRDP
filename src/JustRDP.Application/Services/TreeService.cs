@@ -31,13 +31,14 @@ public class TreeService
         return folder;
     }
 
-    public async Task<ConnectionEntry> CreateConnectionAsync(string name, string hostName, Guid? parentId = null)
+    public async Task<ConnectionEntry> CreateConnectionAsync(string name, string hostName, Guid? parentId = null, int port = 3389)
     {
         var sortOrder = await _repository.GetNextSortOrderAsync(parentId);
         var connection = new ConnectionEntry
         {
             Name = name,
             HostName = hostName,
+            Port = port,
             ParentId = parentId,
             SortOrder = sortOrder
         };

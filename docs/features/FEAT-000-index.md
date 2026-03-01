@@ -30,7 +30,8 @@
 | §6 | UI Layout | FEAT-005, FEAT-009, FEAT-015, FEAT-021 |
 | §7 | Security | FEAT-003 |
 | §8 | Data Storage | FEAT-001 |
-| §9.2 | Post-MVP | FEAT-101 through FEAT-107 |
+| §5.6 | Network Scan | FEAT-109 |
+| §9.2 | Post-MVP | FEAT-101 through FEAT-109 |
 | §10 | Non-Functional Requirements | Cross-cutting |
 
 ---
@@ -59,6 +60,7 @@
 | FEAT-103 | Connection Search & Filter | FEAT-005 | §9.2 | **Partial** (name filter implemented) |
 | FEAT-105 | Bulk Operations (Multi-Select) | FEAT-005 | §9.2 | **Partial** (bulk connect via checkboxes) |
 | FEAT-107 | Connection History & Recents | FEAT-011 | §9.2 | Planned |
+| FEAT-109 | Network Scan (IP Range Discovery) | FEAT-005, FEAT-011 | — | **Done** |
 
 ---
 

@@ -240,19 +240,46 @@ Supported keys:
 - `audiomode`, `autoreconnection enabled`
 - `gatewayhostname`, `gatewayusagemethod`
 
-### 5.6 Theme Management
+### 5.6 Network Scan (Post-MVP, Implemented)
 
-#### 5.6.1 Dark/Light Toggle
+#### 5.6.1 IP Range Discovery
+- Toolbar "Scan" button opens a non-modal, single-instance scan window
+- User enters a CIDR range (e.g. `192.168.1.0/24`) with live translation showing first-last IP and host count
+- CIDR validation: rejects invalid notation, rejects ranges larger than /16, prompts confirmation for ranges larger than /20
+- TCP port scanning (no ICMP) on configurable ports (default 3389) with configurable timeout (default 1500ms)
+- 16 hosts scanned concurrently via `SemaphoreSlim`
+- Reverse DNS resolution with silent failure (fallback to IP)
+- Security disclaimer always visible: "Network scanning may trigger security alerts"
+
+#### 5.6.2 Results & Import
+- Results displayed in a DataGrid with columns: Checkbox, IP, Hostname, Open Ports, Port dropdown, Status
+- Existing hosts detected via case-insensitive matching (IP, hostname, FQDN-to-short) — shown with green background + "Exists" label, checkboxes disabled
+- New hosts shown with blue background + "New" label, checkboxes enabled
+- "Select All New" selects all importable hosts
+- "Import Selected (N)" creates connection entries in a user-selected target folder via `TreeService`
+- Imported entries inherit credentials from parent folder (no credentials set on import)
+- After import, rows update to "Exists" status in-place
+
+#### 5.6.3 Architecture
+- `CidrParser` (Application) — pure static utility for CIDR parsing, IP enumeration, port validation
+- `INetworkScanner` (Domain) — interface for port scanning + DNS resolution
+- `NetworkScanner` (Infrastructure) — TCP connect implementation with `TcpClient.ConnectAsync`
+- `NetworkScanViewModel` (Presentation) — scan orchestration, results, import logic
+- `NetworkScanWindow` (Presentation) — Material Design themed non-modal window
+
+### 5.7 Theme Management
+
+#### 5.7.1 Dark/Light Toggle
 - Toolbar button with ThemeLightDark icon
 - Uses MaterialDesignThemes `PaletteHelper.SetTheme()` for runtime switching
 - Default: Dark theme (Blue primary, LightBlue secondary)
 
-#### 5.6.2 Persistence
+#### 5.7.2 Persistence
 - Theme preference stored in `AppSettings` table (key: "Theme", value: "Dark"/"Light")
 - Loaded on startup before main window shown
 - `ThemeManager` service handles load/save/apply
 
-### 5.7 Keyboard Shortcuts
+### 5.8 Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
@@ -262,7 +289,7 @@ Supported keys:
 | Delete | Delete selected entry |
 | Ctrl+W | Close active tab |
 
-### 5.8 Status Bar
+### 5.9 Status Bar
 - Bottom bar showing entry count and open connections
 - Format: "X entries" or "X entries | Y connection(s) open"
 - Updates on add/delete/connect/disconnect
@@ -273,7 +300,7 @@ Supported keys:
 
 ```
 +-------------------------------------------------------------+
-| [+Folder] [+Connection] [Import] [Export]    [Theme] [Info]  |  <- Toolbar
+| [+Folder] [+Connection] [Import] [Export] [Scan] [Theme] [Info] |  <- Toolbar
 +----------+------------------------------+-------------------+
 | TreeView |  TabablzControl (Dragablz)   | Properties Panel  |
 |          | +----+----+----+             |                   |
@@ -362,13 +389,18 @@ Supported keys:
 - Status bar
 - SQLite persistence with DPAPI credential encryption
 
-### 9.2 Out of Scope (Post-MVP)
+### 9.2 Post-MVP Features
+
+#### Implemented
+- **Network Scan (IP Range Discovery)** — scan a CIDR range for RDP-enabled hosts via TCP port probing, view results with existing-host detection, and selectively import discovered hosts into the connection tree (see FEAT-109)
+- **Connection search/filter** — real-time name filter above the tree (partial, see FEAT-103)
+- **Bulk operations (multi-select)** — checkbox-based multi-select with bulk connect (partial, see FEAT-105)
+
+#### Planned
 - RD Gateway full support (credentials, auth methods) — schema in place, UI deferred
 - SSH/VNC/other protocol support
 - Multi-document (multiple .justrdp files)
 - Cloud sync / team sharing
-- Connection search/filter
-- Bulk operations (multi-select in tree)
 - Connection history / recent connections
 - Custom tab colors / connection badges
 - Auto-login / saved sessions

@@ -5,6 +5,7 @@ using JustRDP.Domain.Interfaces;
 using JustRDP.Infrastructure.Persistence;
 using JustRDP.Infrastructure.Persistence.Repositories;
 using JustRDP.Infrastructure.Security;
+using JustRDP.Infrastructure.Services;
 using JustRDP.Presentation.Themes;
 using JustRDP.Presentation.ViewModels;
 using JustRDP.Presentation.Views;
@@ -44,11 +45,16 @@ public partial class App : System.Windows.Application
                 // Theme
                 services.AddScoped<ThemeManager>();
 
+                // Network scanning
+                services.AddTransient<INetworkScanner, NetworkScanner>();
+
                 // ViewModels
                 services.AddTransient<MainWindowViewModel>();
+                services.AddTransient<NetworkScanViewModel>();
 
                 // Views
                 services.AddTransient<MainWindow>();
+                services.AddTransient<NetworkScanWindow>();
             })
             .Build();
     }

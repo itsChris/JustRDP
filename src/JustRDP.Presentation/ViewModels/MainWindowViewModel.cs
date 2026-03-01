@@ -7,6 +7,7 @@ using JustRDP.Domain.Entities;
 using JustRDP.Domain.Interfaces;
 using JustRDP.Presentation.Themes;
 using JustRDP.Presentation.Views;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace JustRDP.Presentation.ViewModels;
@@ -19,6 +20,9 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ImportExportService _importExportService;
     private readonly ICredentialEncryptor _encryptor;
     private readonly ThemeManager _themeManager;
+    private readonly IServiceProvider _serviceProvider;
+    private NetworkScanWindow? _scanWindow;
+    private IServiceScope? _scanScope;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoTabs))]
@@ -70,7 +74,8 @@ public partial class MainWindowViewModel : ObservableObject
         CredentialInheritanceService credentialService,
         ImportExportService importExportService,
         ICredentialEncryptor encryptor,
-        ThemeManager themeManager)
+        ThemeManager themeManager,
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
         _treeService = treeService;
@@ -78,6 +83,7 @@ public partial class MainWindowViewModel : ObservableObject
         _importExportService = importExportService;
         _encryptor = encryptor;
         _themeManager = themeManager;
+        _serviceProvider = serviceProvider;
         TreeVM = new TreeViewModel(treeService, OnConnectionDoubleClick, OnSelectionChanged, OpenConnectionAsync,
             () => HasCheckedEntries = TreeVM!.GetCheckedConnections().Count > 0);
     }
@@ -205,6 +211,35 @@ public partial class MainWindowViewModel : ObservableObject
     {
         var dialog = new Views.AboutDialog { Owner = System.Windows.Application.Current.MainWindow };
         dialog.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void ShowScan()
+    {
+        if (_scanWindow is not null && _scanWindow.IsLoaded)
+        {
+            _scanWindow.Activate();
+            return;
+        }
+
+        _scanScope = _serviceProvider.CreateScope();
+        _scanWindow = _scanScope.ServiceProvider.GetRequiredService<NetworkScanWindow>();
+
+        // Wire up immediate tree refresh on import
+        var scanVm = (NetworkScanViewModel)_scanWindow.DataContext;
+        scanVm.ImportCompleted += async () =>
+        {
+            await TreeVM.LoadTreeAsync();
+            UpdateStatus();
+        };
+
+        _scanWindow.Closed += (_, _) =>
+        {
+            _scanWindow = null;
+            _scanScope?.Dispose();
+            _scanScope = null;
+        };
+        _scanWindow.Show();
     }
 
     [RelayCommand]
