@@ -55,7 +55,7 @@ Clean Architecture with 4 projects:
 ### 3.3 Dependency Injection
 - `Microsoft.Extensions.Hosting` provides the DI container
 - All services registered as Scoped, ViewModels as Transient
-- Database created via `EnsureCreatedAsync()` on startup
+- Database created/updated via `MigrateAsync()` on startup (with legacy database detection for pre-migration installs)
 
 ---
 
@@ -389,7 +389,7 @@ Supported keys:
 ### 8.1 Database Location
 - `%LOCALAPPDATA%\JustRDP\justrdp.db`
 - Directory created automatically on first run
-- SQLite database created via `EnsureCreatedAsync()` (no migrations needed for v1)
+- SQLite database created/updated via EF Core migrations (`MigrateAsync()` on startup)
 
 ### 8.2 Tables
 
@@ -438,11 +438,9 @@ Supported keys:
 
 #### Implemented
 - **Network Scan (IP Range Discovery)** — scan a CIDR range for RDP-enabled hosts via TCP port probing, view results with existing-host detection, and selectively import discovered hosts into the connection tree (see FEAT-109)
+- **SSH terminal connections** — native WPF terminal with SSH.NET + VtNetCore, password and private key auth, full xterm-256color support, auto-close on disconnect, Quick Connect with `ssh://` prefix (see FEAT-111)
 - **Connection search/filter** — real-time name filter above the tree (partial, see FEAT-103)
 - **Bulk operations (multi-select)** — checkbox-based multi-select with bulk connect (partial, see FEAT-105)
-
-#### In Progress
-- **SSH terminal connections** — native WPF terminal with SSH.NET + VtNetCore, password and private key auth, full xterm-256color support, auto-close on disconnect, Quick Connect with `ssh://` prefix (see FEAT-111)
 
 #### Planned
 - RD Gateway full support (credentials, auth methods) — schema in place, UI deferred

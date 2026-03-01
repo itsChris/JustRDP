@@ -11,6 +11,7 @@
 | **PRD Sections** | §5.10 (new), §9.2 |
 | **Depends On** | FEAT-001 (data model), FEAT-003 (credential encryption), FEAT-005 (tree CRUD), FEAT-011 (tab lifecycle), FEAT-009 (properties dialog) |
 | **Dependents** | — |
+| **Status** | **Done** |
 | **Estimated Complexity** | XL (2-3 weeks) |
 
 ---
@@ -394,11 +395,9 @@ JSON format extended with optional `ConnectionType` field:
 
 ### 5.9 EF Core Migration
 
-```
-dotnet ef migrations add AddSshSupport --project src/JustRDP.Infrastructure --startup-project src/JustRDP.Presentation
-```
+The project uses a single `InitialCreate` migration that creates the full schema including SSH columns. Startup uses `MigrateAsync()` with legacy database detection — existing databases created by `EnsureCreated` (without migration history) are detected, SSH columns are added via `ALTER TABLE`, and the migration is marked as applied.
 
-Migration adds to `TreeEntries` table:
+SSH columns added to `TreeEntries` table:
 - `ConnectionType` INT NOT NULL DEFAULT 0 (RDP)
 - `SshPrivateKeyPath` TEXT NULL
 - `SshPrivateKeyPassphraseEncrypted` BLOB NULL
@@ -475,7 +474,7 @@ Add to `JustRDP.Presentation.csproj`:
 |------|---------|---------|--------|
 | `Domain/Enums/ConnectionType.cs` | Domain | RDP/SSH enum | NEW |
 | `Domain/Entities/ConnectionEntry.cs` | Domain | Add ConnectionType + SSH fields | MODIFIED |
-| `Infrastructure/Migrations/AddSshSupport.cs` | Infrastructure | EF Core migration | NEW |
+| `Infrastructure/Migrations/InitialCreate.cs` | Infrastructure | EF Core migration (full schema) | NEW |
 | `Presentation/Controls/Terminal/SshTerminalControl.xaml(.cs)` | Presentation | SSH terminal UserControl | NEW (from POC) |
 | `Presentation/Controls/Terminal/TerminalSession.cs` | Presentation | SSH.NET + VtNetCore bridge | NEW (from POC) |
 | `Presentation/Controls/Terminal/TerminalRenderer.cs` | Presentation | DrawingVisual terminal rendering | NEW (from POC) |
