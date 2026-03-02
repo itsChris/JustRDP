@@ -330,6 +330,19 @@ public sealed class TerminalSession : IDisposable
         {
             while (_cts is { IsCancellationRequested: false } && _stream != null)
             {
+                // Check DataAvailable first to avoid blocking on Read() after disconnect.
+                // ShellStream.Read() blocks when no data is available, so we poll instead.
+                if (!_stream.DataAvailable)
+                {
+                    if (_client?.IsConnected != true)
+                    {
+                        _logger.LogDebug("[Session] ReadLoop: client disconnected (no data), exiting");
+                        break;
+                    }
+                    Thread.Sleep(10);
+                    continue;
+                }
+
                 int bytesRead;
                 try
                 {
@@ -342,15 +355,7 @@ public sealed class TerminalSession : IDisposable
                 }
 
                 if (bytesRead <= 0)
-                {
-                    if (_client?.IsConnected != true)
-                    {
-                        _logger.LogDebug("[Session] ReadLoop: client disconnected (0-byte read), exiting");
-                        break;
-                    }
-                    Thread.Sleep(10);
                     continue;
-                }
 
                 _logger.LogTrace("[Session] ReadLoop: received {BytesRead} bytes", bytesRead);
                 var data = new byte[bytesRead];
