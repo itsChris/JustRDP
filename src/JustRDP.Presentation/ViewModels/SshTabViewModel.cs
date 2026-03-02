@@ -12,6 +12,7 @@ public partial class SshTabViewModel : ObservableObject, IConnectionTab
     private readonly ConnectionEntry _connection;
     private readonly Credential _credential;
     private readonly ICredentialEncryptor _encryptor;
+    private readonly ILogger<SshTabViewModel>? _logger;
 
     [ObservableProperty]
     private string _tabTitle;
@@ -42,16 +43,34 @@ public partial class SshTabViewModel : ObservableObject, IConnectionTab
         _connection = connection;
         _credential = credential;
         _encryptor = encryptor;
-        _tabTitle = connection.Name;
+        TabTitle = connection.Name;
         LoggerFactory = loggerFactory;
+        _logger = loggerFactory?.CreateLogger<SshTabViewModel>();
+
+        _logger?.LogDebug("[SshTabVM] Created for '{Name}' ({Host}:{Port}), ConnectionId={Id}, " +
+            "hasUser={HasUser}, hasPassword={HasPass}, hasKey={HasKey}",
+            connection.Name, connection.HostName, connection.Port, connection.Id,
+            !string.IsNullOrWhiteSpace(credential.Username),
+            !string.IsNullOrEmpty(credential.Password),
+            !string.IsNullOrEmpty(connection.SshPrivateKeyPath));
     }
 
     public TerminalOptions BuildTerminalOptions()
     {
+        _logger?.LogDebug("[SshTabVM] BuildTerminalOptions for '{Name}': user={User}, hasPassword={HasPass}, " +
+            "keyPath={KeyPath}, font={Font}@{FontSize}",
+            _connection.Name,
+            string.IsNullOrWhiteSpace(_credential.Username) ? "<none>" : _credential.Username,
+            !string.IsNullOrEmpty(_credential.Password),
+            _connection.SshPrivateKeyPath ?? "<none>",
+            _connection.SshTerminalFontFamily ?? "Consolas",
+            _connection.SshTerminalFontSize ?? 14);
+
         string? passphrase = null;
         if (_connection.SshPrivateKeyPassphraseEncrypted is not null)
         {
             passphrase = _encryptor.Decrypt(_connection.SshPrivateKeyPassphraseEncrypted);
+            _logger?.LogDebug("[SshTabVM] Decrypted private key passphrase (length={Length})", passphrase?.Length ?? 0);
         }
 
         return new TerminalOptions
@@ -69,6 +88,7 @@ public partial class SshTabViewModel : ObservableObject, IConnectionTab
 
     public void OnConnected()
     {
+        _logger?.LogInformation("[SshTabVM] OnConnected for '{Name}'", TabTitle);
         IsConnecting = false;
         HasError = false;
         StatusMessage = "Connected";
@@ -76,11 +96,13 @@ public partial class SshTabViewModel : ObservableObject, IConnectionTab
 
     public void OnDisconnected()
     {
+        _logger?.LogInformation("[SshTabVM] OnDisconnected for '{Name}', firing CloseRequested", TabTitle);
         CloseRequested?.Invoke(this);
     }
 
     public void OnError(Exception ex)
     {
+        _logger?.LogError(ex, "[SshTabVM] OnError for '{Name}'", TabTitle);
         IsConnecting = false;
         HasError = true;
         ErrorMessage = ex.Message;
@@ -89,6 +111,7 @@ public partial class SshTabViewModel : ObservableObject, IConnectionTab
 
     public void Disconnect()
     {
+        _logger?.LogDebug("[SshTabVM] Disconnect called for '{Name}'", TabTitle);
         // Actual disconnect handled by the View (SshTabView) which owns the control
     }
 }

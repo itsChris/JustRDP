@@ -128,6 +128,10 @@ public partial class MainWindowViewModel : ObservableObject
         IConnectionTab tabVm;
         if (connection.ConnectionType == ConnectionType.SSH)
         {
+            _logger.LogInformation("Opening SSH session to {Host}:{Port} (user={User}, hasKey={HasKey})",
+                connection.HostName, connection.Port,
+                string.IsNullOrWhiteSpace(credential.Username) ? "<none>" : credential.Username,
+                !string.IsNullOrEmpty(connection.SshPrivateKeyPath));
             tabVm = new SshTabViewModel(connection, credential, _encryptor, _serviceProvider.GetService<ILoggerFactory>());
         }
         else

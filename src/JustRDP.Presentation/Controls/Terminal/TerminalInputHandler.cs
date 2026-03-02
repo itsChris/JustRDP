@@ -88,6 +88,13 @@ public sealed class TerminalInputHandler
 
     public void HandleKeyDown(KeyEventArgs e)
     {
+        // During input capture (pre-auth prompts), only handle basic keys
+        if (_session.IsCapturingInput)
+        {
+            HandleCaptureKeyDown(e);
+            return;
+        }
+
         if (!_session.IsConnected)
             return;
 
@@ -180,6 +187,17 @@ public sealed class TerminalInputHandler
 
     public void HandleTextInput(TextCompositionEventArgs e)
     {
+        // During input capture, forward printable text
+        if (_session.IsCapturingInput)
+        {
+            if (!string.IsNullOrEmpty(e.Text) && e.Text[0] >= 0x20)
+            {
+                _session.Write(Encoding.UTF8.GetBytes(e.Text));
+                e.Handled = true;
+            }
+            return;
+        }
+
         if (!_session.IsConnected || string.IsNullOrEmpty(e.Text))
             return;
 
@@ -189,6 +207,43 @@ public sealed class TerminalInputHandler
 
         _session.Write(Encoding.UTF8.GetBytes(e.Text));
         e.Handled = true;
+    }
+
+    private void HandleCaptureKeyDown(KeyEventArgs e)
+    {
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+        bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
+
+        if (ctrl && key == Key.C)
+        {
+            _session.Write([0x03]);
+            e.Handled = true;
+        }
+        else if (ctrl && key == Key.V)
+        {
+            PasteClipboardRaw();
+            e.Handled = true;
+        }
+        else if (key == Key.Enter)
+        {
+            _session.Write("\r"u8.ToArray());
+            e.Handled = true;
+        }
+        else if (key == Key.Back)
+        {
+            _session.Write([0x7f]);
+            e.Handled = true;
+        }
+    }
+
+    private void PasteClipboardRaw()
+    {
+        if (Clipboard.ContainsText())
+        {
+            var text = Clipboard.GetText();
+            if (!string.IsNullOrEmpty(text))
+                _session.Write(Encoding.UTF8.GetBytes(text));
+        }
     }
 
     private void PasteClipboard()
