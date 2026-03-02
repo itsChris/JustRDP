@@ -343,6 +343,11 @@ public sealed class TerminalSession : IDisposable
 
                 if (bytesRead <= 0)
                 {
+                    if (_client?.IsConnected != true)
+                    {
+                        _logger.LogDebug("[Session] ReadLoop: client disconnected (0-byte read), exiting");
+                        break;
+                    }
                     Thread.Sleep(10);
                     continue;
                 }
