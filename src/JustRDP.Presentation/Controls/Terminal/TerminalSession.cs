@@ -330,22 +330,11 @@ public sealed class TerminalSession : IDisposable
         {
             while (_cts is { IsCancellationRequested: false } && _stream != null)
             {
-                // Check DataAvailable first to avoid blocking on Read() after disconnect.
-                // ShellStream.Read() blocks when no data is available, so we poll instead.
-                if (!_stream.DataAvailable)
-                {
-                    if (_client?.IsConnected != true)
-                    {
-                        _logger.LogDebug("[Session] ReadLoop: client disconnected (no data), exiting");
-                        break;
-                    }
-                    Thread.Sleep(10);
-                    continue;
-                }
-
                 int bytesRead;
                 try
                 {
+                    // Read() blocks until data arrives OR the channel closes (returns 0).
+                    // On intentional Disconnect(), stream disposal throws ObjectDisposedException.
                     bytesRead = _stream.Read(buffer, 0, buffer.Length);
                 }
                 catch (ObjectDisposedException)
@@ -353,9 +342,18 @@ public sealed class TerminalSession : IDisposable
                     _logger.LogDebug("[Session] ReadLoop: stream disposed, exiting");
                     break;
                 }
+                catch (SshConnectionException ex)
+                {
+                    _logger.LogDebug("[Session] ReadLoop: SSH connection dropped ({Message}), exiting", ex.Message);
+                    break;
+                }
 
-                if (bytesRead <= 0)
-                    continue;
+                if (bytesRead == 0)
+                {
+                    // EOF — server closed the channel (e.g. after exit/logout)
+                    _logger.LogDebug("[Session] ReadLoop: Read returned 0 (EOF/channel closed), exiting");
+                    break;
+                }
 
                 _logger.LogTrace("[Session] ReadLoop: received {BytesRead} bytes", bytesRead);
                 var data = new byte[bytesRead];
@@ -451,15 +449,17 @@ public sealed class TerminalSession : IDisposable
         _cts?.Cancel();
         _logger.LogDebug("[Session] CancellationToken cancelled");
 
+        // Dispose stream BEFORE joining the read thread — this unblocks
+        // any blocking Read() call with an ObjectDisposedException.
+        _stream?.Dispose();
+        _stream = null;
+        _logger.LogDebug("[Session] ShellStream disposed");
+
         if (_readThread?.IsAlive == true)
         {
             _logger.LogDebug("[Session] Waiting for ReadLoop thread to join");
             _readThread.Join(TimeSpan.FromSeconds(2));
         }
-
-        _stream?.Dispose();
-        _stream = null;
-        _logger.LogDebug("[Session] ShellStream disposed");
 
         if (_client?.IsConnected == true)
         {
