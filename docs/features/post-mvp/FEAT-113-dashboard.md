@@ -12,7 +12,7 @@
 | **Depends On** | FEAT-001 (data model), FEAT-005 (tree view), FEAT-011 (RDP sessions), FEAT-111 (SSH sessions) |
 | **Dependents** | — |
 | **Subsumes** | FEAT-107 (Connection History) — `LastConnectedAt` and `ConnectCount` tracking |
-| **Status** | Planned |
+| **Status** | **Done** |
 | **Estimated Complexity** | L (1-2 weeks) |
 
 ---

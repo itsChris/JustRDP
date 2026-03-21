@@ -63,7 +63,7 @@
 | FEAT-107 | Connection History & Recents | FEAT-011 | §9.2 | Partially subsumed by FEAT-113 (basic tracking); full session history table remains planned |
 | FEAT-109 | Network Scan (IP Range Discovery) | FEAT-005, FEAT-011 | — | **Done** |
 | FEAT-111 | SSH Terminal Connections | FEAT-001, FEAT-003, FEAT-005, FEAT-009, FEAT-011 | §5.10 | **Done** |
-| FEAT-113 | Dashboard | FEAT-001, FEAT-005, FEAT-011, FEAT-111 | §9.2 | Planned |
+| FEAT-113 | Dashboard | FEAT-001, FEAT-005, FEAT-011, FEAT-111 | §9.2 | **Done** |
 
 ---
 

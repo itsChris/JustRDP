@@ -102,6 +102,32 @@ Must alias: `Point`, `DragEventArgs`, `DragDropEffects`, `DataObject`, `DragDrop
 - **Orphaned gaps**: Moving between parents left gaps in the old parent's sort order sequence. Fixed by re-sequencing old parent siblings after removal.
 - **Insert logic**: Replaced `AddToTree` (always appends) with `Insert` at the correct index, so items land at the drop position.
 
-## 7. References
+## 7. Enhancements (2026-03-21)
+
+### Drop-to-Root Support
+Previously, dropping an item on the empty area of the TreeView was silently ignored. Fixed by handling the case where no `TreeViewItem` is under the cursor — item moves to root level.
+
+### Visual Drop Feedback (DropAdorner)
+Added a `DropAdorner` that provides clear visual indicators during drag operations:
+- **Before**: Blue horizontal line with dot at the top of the target item header
+- **After**: Blue horizontal line with dot at the bottom of the target item header
+- **Into** (folders only): Semi-transparent blue highlight rectangle over the folder header
+
+### Position-Aware Drop Zones
+Each TreeViewItem header is divided into three vertical zones (top 33% / middle 33% / bottom 33%):
+- Top zone → insert as sibling **before** the target
+- Middle zone → insert **into** the target (folders only; connections fall through to "after")
+- Bottom zone → insert as sibling **after** the target
+
+### "Move to..." Context Menu
+Added a right-click "Move to..." context menu item that opens a `MoveToDialog` showing a tree of folders (plus "(Root)"). The entry being moved and its descendants are excluded from the folder list. This provides a non-drag alternative for reorganizing the tree.
+
+### Architecture Changes
+- `MoveEntryAsync` replaced by `MoveEntryToPositionAsync(entry, target, position)` which computes the insert index **after** removal, fixing off-by-one bugs when dragging within the same parent.
+- Added `MoveEntryToFolderAsync(entry, folderId)` for the "Move to..." dialog.
+- Both methods share `MoveEntryInternalAsync` for common remove/insert/persist logic.
+- `DropPosition` enum defined in `Behaviors` namespace: `Before`, `Into`, `After`.
+
+## 8. References
 - §5.1.3: Drag and Drop — Full specification
 - FEAT-005: Base tree view that this builds on

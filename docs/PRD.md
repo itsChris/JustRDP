@@ -441,9 +441,9 @@ Supported keys:
 - **SSH terminal connections** — native WPF terminal with SSH.NET + VtNetCore, password and private key auth, full xterm-256color support, auto-close on disconnect, Quick Connect with `ssh://` prefix (see FEAT-111)
 - **Connection search/filter** — real-time name filter above the tree (partial, see FEAT-103)
 - **Bulk operations (multi-select)** — checkbox-based multi-select with bulk connect (partial, see FEAT-105)
+- **Dashboard** — home view with stats summary (total/online/offline/open sessions), all connections table with availability status, recent connections list (top 10), usage tracking (LastConnectedAt, ConnectCount), permanent "Dashboard" tree node (see FEAT-113)
 
 #### Planned
-- **Dashboard** — home view with stats summary (total/online/offline/open sessions), all connections table with availability status, recent connections list (top 10), usage tracking (LastConnectedAt, ConnectCount), permanent "Dashboard" tree node (see FEAT-113)
 - RD Gateway full support (credentials, auth methods) — schema in place, UI deferred
 - VNC/other protocol support
 - Multi-document (multiple .justrdp files)

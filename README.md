@@ -7,7 +7,8 @@ A lightweight WPF-based remote connection manager for Windows. Organize RDP and 
 - **Tabbed RDP sessions** — open multiple connections side-by-side with independent tabs
 - **SSH terminal sessions**  — connect to Linux/Unix hosts with a built-in VT100/xterm terminal emulator (SSH.NET + VtNetCore); supports password and private-key authentication
 - **Quick Connect** — type a `host:port` in the toolbar and connect instantly without creating a tree entry; use `ssh://user@host:port` for SSH
-- **Folder organization** — group connections into folders with drag-and-drop reordering and alphabetical sorting
+- **Dashboard** — home view with stats summary (total connections, online/offline, open sessions, RDP/SSH counts), all connections table with availability status, recent connections list (top 10 by last connected), and usage tracking
+- **Folder organization** — group connections into folders with drag-and-drop reordering, alphabetical sorting, and "Move to..." folder picker
 - **Tree filter** — real-time search box above the tree to find connections by name
 - **Multi-select** — check multiple connections and connect to all of them at once
 - **Credential inheritance** — set credentials on a folder and all child connections inherit them automatically
@@ -66,6 +67,14 @@ SSH connections  support:
 ```powershell
 git clone https://github.com/itsChris/JustRDP.git
 cd JustRDP
+.\build.ps1              # Release build
+.\build.ps1 -Run         # Build and launch
+.\build.ps1 -Clean -Publish  # Full clean build + publish to build\Release
+```
+
+Or directly:
+
+```powershell
 dotnet run --project src/JustRDP.Presentation
 ```
 

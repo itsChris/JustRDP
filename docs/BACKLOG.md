@@ -1,5 +1,34 @@
 # Backlog
 
+## BUG-012: Dashboard hides open tabs with no way to return (FIXED)
+
+**Severity:** High
+**Introduced in:** FEAT-113 (Dashboard)
+**Status:** Fixed (2026-03-21)
+
+When connections are open and user clicks the Dashboard tree node, `IsDashboardVisible = true` hides the entire tab panel (including tab headers). Clicking a non-dashboard tree entry did not restore the tabs — there was no way to get back to open connections without opening a new one.
+
+**Fix:** In `OnSelectionChanged`, when a non-dashboard tree entry is selected and `OpenTabs.Count > 0`, set `IsDashboardVisible = false` to show the tabs again.
+
+---
+
+## BUG-011: Tree drag-drop to root level silently fails (FIXED)
+
+**Severity:** High
+**Introduced in:** FEAT-007 (Drag & Drop)
+**Status:** Fixed (2026-03-21)
+
+Dropping an item onto the empty area of the TreeView (to move it to root level) was silently ignored. `TreeView_Drop` returned early when `FindAncestor<TreeViewItem>` found no target. Additionally, there was no visual feedback during drag operations — no drop indicator lines or highlights.
+
+**Fix:**
+- Handle null `targetItem` in both `DragOver` and `Drop` as a root-level drop
+- Added `DropAdorner` with three visual states: blue line for before/after, blue highlight for into-folder
+- Added position-aware drop zones (top/middle/bottom thirds of item header)
+- Replaced `MoveEntryAsync` with `MoveEntryToPositionAsync` that computes insertion index after removal (fixing off-by-one within same parent)
+- Added "Move to..." context menu with `MoveToDialog` folder picker as alternative to drag-drop
+
+---
+
 ## BUG-002: NullReferenceException in UpdateSortOrdersInMemory when drag-dropping to root (FIXED)
 
 **Severity:** Critical

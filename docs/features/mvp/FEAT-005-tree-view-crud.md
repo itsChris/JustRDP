@@ -195,6 +195,9 @@ Context menu on connections includes "Duplicate Connection" which clones a conne
 ### Connect All
 Context menu on folders includes "Connect All" which opens RDP sessions for all child connections recursively.
 
+### Move to... (2026-03-21)
+Context menu includes "Move to..." which opens a `MoveToDialog` showing a tree of folders and "(Root)". The entry being moved and its descendants are excluded. Provides a non-drag alternative for tree reorganization. Uses `TreeViewModel.MoveEntryToFolderAsync`.
+
 ## 8. References
 - §5.1: Tree View — Full specification
 - FEAT-007: Adds drag-drop on top of this tree
