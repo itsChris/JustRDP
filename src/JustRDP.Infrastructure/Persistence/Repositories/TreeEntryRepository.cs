@@ -85,6 +85,12 @@ public class TreeEntryRepository : ITreeEntryRepository
         await _db.SaveChangesAsync();
     }
 
+    public async Task UpdateUsageAsync(Guid connectionId, DateTime lastConnectedAt, int connectCount)
+    {
+        await _db.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE TreeEntries SET LastConnectedAt = {lastConnectedAt}, ConnectCount = {connectCount}, ModifiedAt = {DateTime.UtcNow} WHERE Id = {connectionId}");
+    }
+
     public async Task<int> GetNextSortOrderAsync(Guid? parentId)
     {
         var max = await _db.TreeEntries

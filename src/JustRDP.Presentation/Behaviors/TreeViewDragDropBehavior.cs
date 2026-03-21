@@ -71,7 +71,7 @@ public static class TreeViewDragDropBehavior
         var treeViewItem = FindAncestor<TreeViewItem>((DependencyObject)e.OriginalSource);
         if (treeViewItem?.DataContext is not TreeEntryViewModel item) return;
 
-        if (item.IsEditing) return;
+        if (item.IsEditing || item.IsDashboard) return;
 
         _draggedItem = item;
         DragDrop.DoDragDrop(treeView, new DataObject(typeof(TreeEntryViewModel), item), DragDropEffects.Move);
@@ -90,7 +90,7 @@ public static class TreeViewDragDropBehavior
         var targetItem = FindAncestor<TreeViewItem>((DependencyObject)e.OriginalSource);
         if (targetItem?.DataContext is TreeEntryViewModel target && _draggedItem is not null)
         {
-            if (target.Id == _draggedItem.Id || IsDescendant(_draggedItem, target))
+            if (target.IsDashboard || target.Id == _draggedItem.Id || IsDescendant(_draggedItem, target))
             {
                 e.Effects = DragDropEffects.None;
                 e.Handled = true;
@@ -110,7 +110,7 @@ public static class TreeViewDragDropBehavior
         var targetItem = FindAncestor<TreeViewItem>((DependencyObject)e.OriginalSource);
 
         if (targetItem?.DataContext is not TreeEntryViewModel target) return;
-        if (draggedItem.Id == target.Id) return;
+        if (target.IsDashboard || draggedItem.Id == target.Id) return;
 
         var treeView = (TreeView)sender;
         var treeViewModel = GetTreeViewModel(treeView);

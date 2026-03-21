@@ -32,6 +32,12 @@ public partial class PropertiesViewModel : ObservableObject
     [ObservableProperty]
     private bool _isConnection;
 
+    [ObservableProperty]
+    private DateTime? _lastConnected;
+
+    [ObservableProperty]
+    private int _timesConnected;
+
     private TreeEntry? _currentEntry;
 
     public void LoadEntry(TreeEntry? entry, Credential? resolvedCredential = null)
@@ -47,6 +53,8 @@ public partial class PropertiesViewModel : ObservableObject
             CredentialDisplay = "None";
             Notes = null;
             IsConnection = false;
+            LastConnected = null;
+            TimesConnected = 0;
             return;
         }
 
@@ -59,6 +67,8 @@ public partial class PropertiesViewModel : ObservableObject
             HostName = conn.HostName;
             Port = conn.Port;
             Notes = conn.Notes;
+            LastConnected = conn.LastConnectedAt;
+            TimesConnected = conn.ConnectCount;
 
             if (resolvedCredential is not null && !resolvedCredential.IsEmpty)
             {
@@ -80,6 +90,8 @@ public partial class PropertiesViewModel : ObservableObject
             HostName = string.Empty;
             Port = 0;
             Notes = null;
+            LastConnected = null;
+            TimesConnected = 0;
 
             if (entry is FolderEntry folder && !string.IsNullOrEmpty(folder.CredentialUsername))
             {

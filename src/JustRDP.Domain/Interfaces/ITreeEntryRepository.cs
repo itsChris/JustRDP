@@ -12,5 +12,6 @@ public interface ITreeEntryRepository
     Task UpdateAsync(TreeEntry entry);
     Task DeleteAsync(Guid id);
     Task UpdateSortOrderAsync(IEnumerable<(Guid Id, int SortOrder)> updates);
+    Task UpdateUsageAsync(Guid connectionId, DateTime lastConnectedAt, int connectCount);
     Task<int> GetNextSortOrderAsync(Guid? parentId);
 }

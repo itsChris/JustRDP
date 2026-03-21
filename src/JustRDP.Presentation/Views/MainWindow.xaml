@@ -222,7 +222,8 @@
                                   behaviors:TreeViewDragDropBehavior.TreeViewModel="{Binding TreeVM}"
                                   VirtualizingStackPanel.IsVirtualizing="True"
                                   BorderThickness="0" Padding="4"
-                                  SelectedItemChanged="TreeView_SelectedItemChanged">
+                                  SelectedItemChanged="TreeView_SelectedItemChanged"
+                                  KeyDown="TreeView_KeyDown">
                             <TreeView.ItemContainerStyle>
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -240,16 +241,30 @@
                                                     Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVis}}">
                                             <CheckBox IsChecked="{Binding IsChecked}"
                                                       VerticalAlignment="Center" Margin="0,0,4,0"
-                                                      Visibility="{Binding IsConnection, Converter={StaticResource BoolToVis}}" />
+                                                      Visibility="{Binding ShowCheckBox, Converter={StaticResource BoolToVis}}" />
                                             <Ellipse Width="8" Height="8" Margin="0,0,4,0"
                                                      VerticalAlignment="Center"
-                                                     Fill="{Binding AvailabilityStatus, Converter={StaticResource AvailabilityToBrush}}"
-                                                     Visibility="{Binding DataContext.IsMonitoringEnabled, Source={x:Reference ThisWindow}, Converter={StaticResource BoolToVis}}" />
+                                                     Fill="{Binding AvailabilityStatus, Converter={StaticResource AvailabilityToBrush}}">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding DataContext.IsMonitoringEnabled, Source={x:Reference ThisWindow}}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ShowAvailabilityDot}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
                                             <materialDesign:PackIcon VerticalAlignment="Center" Margin="0,0,6,0" Width="18" Height="18">
                                                 <materialDesign:PackIcon.Kind>
                                                     <MultiBinding Converter="{StaticResource EntryTypeToIcon}">
                                                         <Binding Path="EntryType" />
                                                         <Binding Path="ConnectionType" />
+                                                        <Binding Path="IsDashboard" />
                                                     </MultiBinding>
                                                 </materialDesign:PackIcon.Kind>
                                             </materialDesign:PackIcon>
@@ -263,6 +278,7 @@
                                                     <MultiBinding Converter="{StaticResource EntryTypeToIcon}">
                                                         <Binding Path="EntryType" />
                                                         <Binding Path="ConnectionType" />
+                                                        <Binding Path="IsDashboard" />
                                                     </MultiBinding>
                                                 </materialDesign:PackIcon.Kind>
                                             </materialDesign:PackIcon>
@@ -321,6 +337,11 @@
                                                 </ContextMenu>
                                             </Setter.Value>
                                         </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDashboard}" Value="True">
+                                                <Setter Property="ContextMenu" Value="{x:Null}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
                                     </Style>
                                 </HierarchicalDataTemplate.Resources>
                             </HierarchicalDataTemplate>
@@ -336,12 +357,12 @@
 
             <!-- Tab Area -->
             <Grid Grid.Column="2">
-                <TextBlock Text="Double-click a connection to open a session"
-                           Opacity="0.3" FontSize="14"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           Visibility="{Binding HasNoTabs, Converter={StaticResource BoolToVis}}" />
+                <!-- Dashboard (visible when no tab selected or Dashboard node clicked) -->
+                <views:DashboardView DataContext="{Binding DashboardVM}"
+                                     Visibility="{Binding IsDashboardVisible, Converter={StaticResource BoolToVis}}" />
 
-                <DockPanel Visibility="{Binding HasNoTabs, Converter={StaticResource InverseBoolToVis}}">
+                <!-- Tabs (visible when a connection tab is active) -->
+                <DockPanel Visibility="{Binding IsDashboardVisible, Converter={StaticResource InverseBoolToVis}}">
                     <!-- Tab headers only (no content area) -->
                     <TabControl DockPanel.Dock="Top"
                                 ItemsSource="{Binding OpenTabs}"

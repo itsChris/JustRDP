@@ -20,5 +20,6 @@ public class ConnectionEntryConfiguration : IEntityTypeConfiguration<ConnectionE
         builder.Property(e => e.Notes).HasMaxLength(4000);
         builder.Property(e => e.GatewayHostName).HasMaxLength(256);
         builder.Property(e => e.SshTerminalFontFamily).HasMaxLength(128);
+        builder.Property(e => e.ConnectCount).HasDefaultValue(0);
     }
 }

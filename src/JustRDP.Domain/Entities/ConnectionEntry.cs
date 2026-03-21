@@ -50,4 +50,8 @@ public class ConnectionEntry : TreeEntry
     public byte[]? SshPrivateKeyPassphraseEncrypted { get; set; }
     public string? SshTerminalFontFamily { get; set; }
     public double? SshTerminalFontSize { get; set; }
+
+    // Usage tracking
+    public DateTime? LastConnectedAt { get; set; }
+    public int ConnectCount { get; set; }
 }

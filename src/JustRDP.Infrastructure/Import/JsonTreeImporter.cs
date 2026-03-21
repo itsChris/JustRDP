@@ -74,7 +74,9 @@ public static class JsonTreeImporter
                 Notes = node.Notes,
                 SshPrivateKeyPath = node.SshPrivateKeyPath,
                 SshTerminalFontFamily = node.SshTerminalFontFamily,
-                SshTerminalFontSize = node.SshTerminalFontSize
+                SshTerminalFontSize = node.SshTerminalFontSize,
+                LastConnectedAt = node.LastConnectedAt,
+                ConnectCount = node.ConnectCount ?? 0
             };
             entries.Add(connection);
         }
@@ -108,5 +110,7 @@ internal class JsonTreeNode
     public string? SshPrivateKeyPath { get; set; }
     public string? SshTerminalFontFamily { get; set; }
     public double? SshTerminalFontSize { get; set; }
+    public DateTime? LastConnectedAt { get; set; }
+    public int? ConnectCount { get; set; }
     public List<JsonTreeNode>? Children { get; set; }
 }

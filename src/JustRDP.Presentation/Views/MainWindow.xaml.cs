@@ -148,6 +148,25 @@ public partial class MainWindow : Window
         }
     }
 
+    private void TreeView_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        if (sender is not System.Windows.Controls.TreeView tv) return;
+        if (tv.SelectedItem is not TreeEntryViewModel vm) return;
+        if (vm.IsEditing) return;
+
+        ViewModel.TreeVM.DoubleClickEntryCommand.Execute(vm);
+
+        // Dashboard node: DoubleClickEntry is a no-op, but selection already shows dashboard
+        // Ensure dashboard is visible when Enter is pressed on it
+        if (vm.IsDashboard)
+        {
+            ViewModel.IsDashboardVisible = true;
+        }
+
+        e.Handled = true;
+    }
+
     private void QuickConnectBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter && ViewModel.QuickConnectCommand.CanExecute(null))

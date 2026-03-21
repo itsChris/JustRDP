@@ -40,14 +40,17 @@ public partial class TreeEntryViewModel : ObservableObject
     [ObservableProperty]
     private AvailabilityStatus _availabilityStatus = AvailabilityStatus.Unknown;
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
     public Guid? ParentId { get; set; }
     public int SortOrder { get; set; }
-    public TreeEntryType EntryType { get; }
-    public Domain.Enums.ConnectionType? ConnectionType { get; }
+    public TreeEntryType EntryType { get; private set; }
+    public Domain.Enums.ConnectionType? ConnectionType { get; private set; }
     public bool IsConnection => EntryType == TreeEntryType.Connection;
     public bool IsFolder => EntryType == TreeEntryType.Folder;
-    public TreeEntry Entity { get; }
+    public bool IsDashboard { get; init; }
+    public bool ShowCheckBox => IsConnection && !IsDashboard;
+    public bool ShowAvailabilityDot => IsConnection && !IsDashboard;
+    public TreeEntry Entity { get; private set; }
     public ObservableCollection<TreeEntryViewModel> Children { get; } = [];
     public ObservableCollection<TreeEntryViewModel> FilteredChildren { get; } = [];
 
@@ -69,6 +72,18 @@ public partial class TreeEntryViewModel : ObservableObject
             EntryType = TreeEntryType.Connection;
             ConnectionType = entity is ConnectionEntry conn ? conn.ConnectionType : null;
         }
+    }
+
+    public TreeEntryViewModel(string name, bool isDashboard)
+    {
+        IsDashboard = isDashboard;
+        Entity = null!;
+        Id = Guid.Empty;
+        Name = name;
+        ParentId = null;
+        SortOrder = -1;
+        EntryType = TreeEntryType.Folder;
+        ConnectionType = null;
     }
 
     [RelayCommand]

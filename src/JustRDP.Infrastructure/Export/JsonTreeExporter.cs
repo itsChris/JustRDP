@@ -67,7 +67,9 @@ public static class JsonTreeExporter
             Notes = conn.Notes,
             SshPrivateKeyPath = conn.SshPrivateKeyPath,
             SshTerminalFontFamily = conn.SshTerminalFontFamily,
-            SshTerminalFontSize = conn.SshTerminalFontSize
+            SshTerminalFontSize = conn.SshTerminalFontSize,
+            LastConnectedAt = conn.LastConnectedAt,
+            conn.ConnectCount
         };
     }
 }

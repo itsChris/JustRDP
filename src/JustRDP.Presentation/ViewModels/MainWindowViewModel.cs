@@ -42,7 +42,11 @@ public partial class MainWindowViewModel : ObservableObject
     partial void OnSelectedTabChanged(IConnectionTab? oldValue, IConnectionTab? newValue)
     {
         if (oldValue is not null) oldValue.IsSelected = false;
-        if (newValue is not null) newValue.IsSelected = true;
+        if (newValue is not null)
+        {
+            newValue.IsSelected = true;
+            IsDashboardVisible = false;
+        }
     }
 
     [ObservableProperty]
@@ -63,8 +67,13 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isMonitoringEnabled;
 
+    [ObservableProperty]
+    private bool _isDashboardVisible = true;
+
     public bool HasNoTabs => OpenTabCount == 0;
     public bool HasNoSelection => SelectedEntry is null;
+
+    public DashboardViewModel DashboardVM { get; }
 
     partial void OnTreeFilterTextChanged(string value)
     {
@@ -96,6 +105,7 @@ public partial class MainWindowViewModel : ObservableObject
         _availabilityMonitor.SummaryChanged += OnAvailabilitySummaryChanged;
         TreeVM = new TreeViewModel(treeService, OnConnectionDoubleClick, OnSelectionChanged, OpenConnectionAsync,
             () => HasCheckedEntries = TreeVM!.GetCheckedConnections().Count > 0);
+        DashboardVM = new DashboardViewModel(OpenConnectionAsync, ConnectionExistsInTree, RefreshDashboard);
     }
 
     public async Task InitializeAsync()
@@ -105,6 +115,7 @@ public partial class MainWindowViewModel : ObservableObject
         IsMonitoringEnabled = await _availabilityMonitor.LoadEnabledStateAsync();
         _availabilityMonitor.Initialize(TreeVM);
         UpdateStatus();
+        RefreshDashboard();
     }
 
     private async void OnConnectionDoubleClick(ConnectionEntry connection)
@@ -143,7 +154,21 @@ public partial class MainWindowViewModel : ObservableObject
         OpenTabs.Add(tabVm);
         SelectedTab = tabVm;
         OpenTabCount = OpenTabs.Count;
+
+        // Track usage for persisted connections (skip quick connect)
+        if (connection.Id != Guid.Empty)
+        {
+            connection.LastConnectedAt = DateTime.UtcNow;
+            connection.ConnectCount++;
+            _ = Task.Run(async () =>
+            {
+                try { await _treeService.UpdateUsageAsync(connection.Id, connection.LastConnectedAt.Value, connection.ConnectCount); }
+                catch (Exception ex) { _logger.LogWarning(ex, "Usage tracking failed for {Name}", connection.Name); }
+            });
+        }
+
         UpdateStatus();
+        RefreshDashboard();
     }
 
     [RelayCommand]
@@ -154,12 +179,23 @@ public partial class MainWindowViewModel : ObservableObject
         tab.Disconnect();
         OpenTabs.Remove(tab);
         OpenTabCount = OpenTabs.Count;
+        if (OpenTabs.Count == 0)
+        {
+            IsDashboardVisible = true;
+            RefreshDashboard();
+        }
         UpdateStatus();
     }
 
     private async void OnSelectionChanged(TreeEntryViewModel? entry)
     {
         SelectedEntry = entry;
+        if (entry?.IsDashboard == true)
+        {
+            IsDashboardVisible = true;
+            RefreshDashboard();
+            return;
+        }
         await UpdatePropertiesPanelAsync(entry);
     }
 
@@ -293,6 +329,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await TreeVM.LoadTreeAsync();
             UpdateStatus();
+            RefreshDashboard();
         };
 
         _scanWindow.Closed += (_, _) =>
@@ -319,6 +356,11 @@ public partial class MainWindowViewModel : ObservableObject
         OpenTabs.Remove(SelectedTab);
         OpenTabCount = OpenTabs.Count;
         SelectedTab = OpenTabs.LastOrDefault();
+        if (OpenTabs.Count == 0)
+        {
+            IsDashboardVisible = true;
+            RefreshDashboard();
+        }
         UpdateStatus();
     }
 
@@ -330,6 +372,7 @@ public partial class MainWindowViewModel : ObservableObject
             : SelectedEntry?.ParentId;
         await TreeVM.AddFolderCommand.ExecuteAsync(parentId);
         UpdateStatus();
+        RefreshDashboard();
     }
 
     [RelayCommand]
@@ -340,20 +383,23 @@ public partial class MainWindowViewModel : ObservableObject
             : SelectedEntry?.ParentId;
         await TreeVM.AddConnectionCommand.ExecuteAsync(parentId);
         UpdateStatus();
+        RefreshDashboard();
     }
 
     [RelayCommand]
     private void RenameSelected()
     {
+        if (SelectedEntry is { IsDashboard: true }) return;
         SelectedEntry?.BeginEditCommand.Execute(null);
     }
 
     [RelayCommand]
     private async Task DeleteSelected()
     {
-        if (SelectedEntry is null) return;
+        if (SelectedEntry is null or { IsDashboard: true }) return;
         await TreeVM.DeleteEntryCommand.ExecuteAsync(SelectedEntry);
         UpdateStatus();
+        RefreshDashboard();
     }
 
     public async Task CommitRenameAsync(TreeEntryViewModel vm)
@@ -366,7 +412,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void OpenPropertiesDialog()
     {
-        if (SelectedEntry is null) return;
+        if (SelectedEntry is null or { IsDashboard: true }) return;
 
         var propsVm = new ConnectionPropertiesViewModel(_treeService, _encryptor);
 
@@ -419,6 +465,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         await TreeVM.LoadTreeAsync();
         UpdateStatus();
+        RefreshDashboard();
         StatusText = $"Imported {dialog.FileNames.Length} file(s)";
     }
 
@@ -452,7 +499,11 @@ public partial class MainWindowViewModel : ObservableObject
     public void PauseMonitoring() => _availabilityMonitor.Pause();
     public void ResumeMonitoring() => _availabilityMonitor.Resume();
 
-    private void OnAvailabilitySummaryChanged() => UpdateStatus();
+    private void OnAvailabilitySummaryChanged()
+    {
+        UpdateStatus();
+        RefreshDashboard();
+    }
 
     private void UpdateStatus()
     {
@@ -465,5 +516,90 @@ public partial class MainWindowViewModel : ObservableObject
             status += $" | {_availabilityMonitor.AvailableCount}/{_availabilityMonitor.TotalChecked} available";
 
         StatusText = status;
+    }
+
+    private bool ConnectionExistsInTree(Guid connectionId)
+    {
+        return FindConnectionInTree(connectionId, TreeVM.RootEntries);
+    }
+
+    private static bool FindConnectionInTree(Guid id, ObservableCollection<TreeEntryViewModel> entries)
+    {
+        foreach (var entry in entries)
+        {
+            if (entry.IsDashboard) continue;
+            if (entry.Id == id) return true;
+            if (FindConnectionInTree(id, entry.Children)) return true;
+        }
+        return false;
+    }
+
+    private void RefreshDashboard()
+    {
+        DashboardVM.Refresh(BuildDashboardData());
+    }
+
+    private DashboardData BuildDashboardData()
+    {
+        var allItems = new List<DashboardConnectionItem>();
+        CollectDashboardConnections(TreeVM.RootEntries, allItems);
+
+        var onlineCount = 0;
+        var offlineCount = 0;
+        var rdpCount = 0;
+        var sshCount = 0;
+
+        foreach (var item in allItems)
+        {
+            if (item.Status == AvailabilityStatus.Available) onlineCount++;
+            else if (item.Status == AvailabilityStatus.Unavailable) offlineCount++;
+
+            if (item.Protocol == "SSH") sshCount++;
+            else rdpCount++;
+        }
+
+        var recentItems = allItems
+            .Where(i => i.LastConnectedAt.HasValue)
+            .OrderByDescending(i => i.LastConnectedAt)
+            .Take(10)
+            .ToList();
+
+        return new DashboardData
+        {
+            TotalConnections = allItems.Count,
+            OnlineCount = onlineCount,
+            OfflineCount = offlineCount,
+            OpenSessions = OpenTabs.Count,
+            RdpCount = rdpCount,
+            SshCount = sshCount,
+            IsMonitoringEnabled = IsMonitoringEnabled,
+            AllConnections = allItems,
+            RecentConnections = recentItems
+        };
+    }
+
+    private static void CollectDashboardConnections(
+        System.Collections.ObjectModel.ObservableCollection<TreeEntryViewModel> entries,
+        List<DashboardConnectionItem> results)
+    {
+        foreach (var entry in entries)
+        {
+            if (entry.IsDashboard) continue;
+            if (entry.Entity is ConnectionEntry conn && !string.IsNullOrWhiteSpace(conn.HostName))
+            {
+                results.Add(new DashboardConnectionItem
+                {
+                    Connection = conn,
+                    Name = conn.Name,
+                    Host = conn.HostName,
+                    Protocol = conn.ConnectionType == ConnectionType.SSH ? "SSH" : "RDP",
+                    Port = conn.Port,
+                    ConnectionType = conn.ConnectionType,
+                    Status = entry.AvailabilityStatus,
+                    LastConnectedAt = conn.LastConnectedAt
+                });
+            }
+            CollectDashboardConnections(entry.Children, results);
+        }
     }
 }

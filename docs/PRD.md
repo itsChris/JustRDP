@@ -443,15 +443,15 @@ Supported keys:
 - **Bulk operations (multi-select)** — checkbox-based multi-select with bulk connect (partial, see FEAT-105)
 
 #### Planned
+- **Dashboard** — home view with stats summary (total/online/offline/open sessions), all connections table with availability status, recent connections list (top 10), usage tracking (LastConnectedAt, ConnectCount), permanent "Dashboard" tree node (see FEAT-113)
 - RD Gateway full support (credentials, auth methods) — schema in place, UI deferred
 - VNC/other protocol support
 - Multi-document (multiple .justrdp files)
 - Cloud sync / team sharing
-- Connection history / recent connections
+- Connection history / full session logging — basic tracking (last connected, connect count) covered by FEAT-113, detailed session history table (connect/disconnect times, durations) remains planned (see FEAT-107)
 - Custom tab colors / connection badges
 - Auto-login / saved sessions
 - Full-screen RDP mode
-- Connection health monitoring / ping
 - Plugin/extension system
 
 ---

@@ -70,6 +70,9 @@ public class TreeService
     public Task UpdateSortOrderAsync(IEnumerable<(Guid Id, int SortOrder)> updates)
         => _repository.UpdateSortOrderAsync(updates);
 
+    public Task UpdateUsageAsync(Guid connectionId, DateTime lastConnectedAt, int connectCount)
+        => _repository.UpdateUsageAsync(connectionId, lastConnectedAt, connectCount);
+
     public async Task<ConnectionEntry> DuplicateConnectionAsync(ConnectionEntry source)
     {
         var sortOrder = await _repository.GetNextSortOrderAsync(source.ParentId);

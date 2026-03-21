@@ -184,6 +184,7 @@
                       SelectionMode="Single"
                       CanUserSortColumns="True"
                       HeadersVisibility="Column"
+                      RowHeaderWidth="0"
                       GridLinesVisibility="Horizontal"
                       BorderThickness="1"
                       BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"

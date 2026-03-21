@@ -12,6 +12,7 @@
 | **Depends On** | FEAT-011 (RDP sessions) |
 | **Dependents** | — |
 | **Estimated Complexity** | M (3-5 days) |
+| **Note** | Core tracking (LastConnectedAt, ConnectCount) subsumed by FEAT-113 (Dashboard). This feature remains for full session history logging (ConnectionHistory table with connect/disconnect times, durations). |
 
 ---
 

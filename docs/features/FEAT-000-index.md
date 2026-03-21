@@ -32,7 +32,7 @@
 | §8 | Data Storage | FEAT-001 |
 | §5.6 | Network Scan | FEAT-109 |
 | §5.10 | SSH Terminal Connections | FEAT-111 |
-| §9.2 | Post-MVP | FEAT-101 through FEAT-111 |
+| §9.2 | Post-MVP | FEAT-101 through FEAT-113 |
 | §10 | Non-Functional Requirements | Cross-cutting |
 
 ---
@@ -60,9 +60,10 @@
 | FEAT-101 | RD Gateway Full Support | FEAT-011 | §9.2 | Planned |
 | FEAT-103 | Connection Search & Filter | FEAT-005 | §9.2 | **Partial** (name filter implemented) |
 | FEAT-105 | Bulk Operations (Multi-Select) | FEAT-005 | §9.2 | **Partial** (bulk connect via checkboxes) |
-| FEAT-107 | Connection History & Recents | FEAT-011 | §9.2 | Planned |
+| FEAT-107 | Connection History & Recents | FEAT-011 | §9.2 | Partially subsumed by FEAT-113 (basic tracking); full session history table remains planned |
 | FEAT-109 | Network Scan (IP Range Discovery) | FEAT-005, FEAT-011 | — | **Done** |
 | FEAT-111 | SSH Terminal Connections | FEAT-001, FEAT-003, FEAT-005, FEAT-009, FEAT-011 | §5.10 | **Done** |
+| FEAT-113 | Dashboard | FEAT-001, FEAT-005, FEAT-011, FEAT-111 | §9.2 | Planned |
 
 ---
 

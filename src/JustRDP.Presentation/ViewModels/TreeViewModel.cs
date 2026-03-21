@@ -24,6 +24,7 @@ public partial class TreeViewModel : ObservableObject
 
     public bool HasEntries => EntryCount > 0;
 
+    public TreeEntryViewModel? DashboardNode { get; private set; }
     public ObservableCollection<TreeEntryViewModel> RootEntries { get; } = [];
     public ObservableCollection<TreeEntryViewModel> FilteredRootEntries { get; } = [];
 
@@ -74,6 +75,11 @@ public partial class TreeViewModel : ObservableObject
 
         EntryCount = allEntries.Count;
         SyncFilteredEntries();
+
+        DashboardNode = new TreeEntryViewModel("Dashboard", isDashboard: true);
+        RootEntries.Insert(0, DashboardNode);
+        FilteredRootEntries.Insert(0, DashboardNode);
+        SelectedEntry = DashboardNode;
     }
 
     public void ApplyFilter(string? filterText)
@@ -90,6 +96,7 @@ public partial class TreeViewModel : ObservableObject
         var anyVisible = false;
         foreach (var entry in entries)
         {
+            if (entry.IsDashboard) { entry.IsVisible = true; anyVisible = true; continue; }
             var childVisible = ApplyFilterRecursive(entry.Children, filter);
             var nameMatch = string.IsNullOrEmpty(filter) ||
                             entry.Name.Contains(filter, StringComparison.OrdinalIgnoreCase);
@@ -136,6 +143,7 @@ public partial class TreeViewModel : ObservableObject
     {
         foreach (var entry in entries)
         {
+            if (entry.IsDashboard) continue;
             if (entry.IsChecked && entry.Entity is ConnectionEntry conn && !string.IsNullOrEmpty(conn.HostName))
                 results.Add(conn);
             CollectCheckedConnections(entry.Children, results);
@@ -212,7 +220,7 @@ public partial class TreeViewModel : ObservableObject
     [RelayCommand]
     private async Task SortChildren(TreeEntryViewModel? entry)
     {
-        if (entry is null || !entry.IsFolder) return;
+        if (entry is null || !entry.IsFolder || entry.IsDashboard) return;
 
         var sorted = entry.Children.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList();
         entry.Children.Clear();
@@ -242,7 +250,7 @@ public partial class TreeViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteEntry(TreeEntryViewModel? entry)
     {
-        if (entry is null) return;
+        if (entry is null || entry.IsDashboard) return;
         await _treeService.DeleteAsync(entry.Id);
         RemoveFromTree(entry);
         if (SelectedEntry == entry)
@@ -264,11 +272,12 @@ public partial class TreeViewModel : ObservableObject
     [RelayCommand]
     private void DoubleClickEntry(TreeEntryViewModel? entry)
     {
-        if (entry?.Entity is ConnectionEntry connection)
+        if (entry is null || entry.IsDashboard) return;
+        if (entry.Entity is ConnectionEntry connection)
         {
             _onConnectionDoubleClick?.Invoke(connection);
         }
-        else if (entry is not null)
+        else
         {
             entry.IsExpanded = !entry.IsExpanded;
         }
@@ -285,7 +294,7 @@ public partial class TreeViewModel : ObservableObject
         {
             var oldSiblings = GetSiblings(oldParentId);
             UpdateSortOrdersInMemory(oldSiblings);
-            await _treeService.UpdateSortOrderAsync(oldSiblings.Select((s, i) => (s.Id, i)).ToList());
+            await _treeService.UpdateSortOrderAsync(oldSiblings.Where(s => !s.IsDashboard).Select((s, i) => (s.Id, i)).ToList());
         }
 
         // Update entity
@@ -309,13 +318,14 @@ public partial class TreeViewModel : ObservableObject
 
         // Persist
         await _treeService.UpdateAsync(entry.Entity);
-        await _treeService.UpdateSortOrderAsync(newSiblings.Select((s, i) => (s.Id, i)).ToList());
+        await _treeService.UpdateSortOrderAsync(newSiblings.Where(s => !s.IsDashboard).Select((s, i) => (s.Id, i)).ToList());
     }
 
     private static void UpdateSortOrdersInMemory(ObservableCollection<TreeEntryViewModel> siblings)
     {
         for (var i = 0; i < siblings.Count; i++)
         {
+            if (siblings[i].IsDashboard) continue;
             siblings[i].SortOrder = i;
             siblings[i].Entity.SortOrder = i;
         }
@@ -410,6 +420,7 @@ public partial class TreeViewModel : ObservableObject
     {
         foreach (var entry in entries)
         {
+            if (entry.IsDashboard) continue;
             count++;
             CountRecursive(entry.Children, ref count);
         }
