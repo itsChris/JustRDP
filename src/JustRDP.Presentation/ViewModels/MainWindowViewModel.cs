@@ -196,6 +196,13 @@ public partial class MainWindowViewModel : ObservableObject
             RefreshDashboard();
             return;
         }
+
+        // Clicking any non-dashboard tree entry shows tabs if any are open
+        if (OpenTabs.Count > 0)
+        {
+            IsDashboardVisible = false;
+        }
+
         await UpdatePropertiesPanelAsync(entry);
     }
 
@@ -407,6 +414,24 @@ public partial class MainWindowViewModel : ObservableObject
         await TreeVM.RenameEntryCommand.ExecuteAsync(vm);
         if (vm == SelectedEntry)
             await UpdatePropertiesPanelAsync(vm);
+    }
+
+    [RelayCommand]
+    private async Task MoveTo(TreeEntryViewModel? entry)
+    {
+        if (entry is null or { IsDashboard: true }) return;
+
+        var dialog = new MoveToDialog(TreeVM.RootEntries, entry.Id)
+        {
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            await TreeVM.MoveEntryToFolderAsync(entry, dialog.SelectedFolderId);
+            UpdateStatus();
+            RefreshDashboard();
+        }
     }
 
     [RelayCommand]

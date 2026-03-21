@@ -323,6 +323,10 @@
                                                               Icon="{materialDesign:PackIcon Kind=ContentDuplicate}"
                                                               Visibility="{Binding IsConnection, Converter={StaticResource BoolToVis}}" />
                                                     <Separator Visibility="{Binding IsConnection, Converter={StaticResource BoolToVis}}" />
+                                                    <MenuItem Header="Move to..."
+                                                              Command="{Binding DataContext.MoveToCommand, Source={x:Reference ThisWindow}}"
+                                                              CommandParameter="{Binding}"
+                                                              Icon="{materialDesign:PackIcon Kind=FolderMoveOutline}" />
                                                     <MenuItem Header="Rename (F2)"
                                                               Command="{Binding BeginEditCommand}"
                                                               Icon="{materialDesign:PackIcon Kind=Pencil}" />

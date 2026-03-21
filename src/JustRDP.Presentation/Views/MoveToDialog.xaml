@@ -1,0 +1,53 @@
+<Window x:Class="JustRDP.Presentation.Views.MoveToDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Move to..."
+        Height="400" Width="320"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource MaterialDesign.Brush.Background}"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        FontFamily="{DynamicResource MaterialDesignFont}">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Select destination folder:" Margin="0,0,0,8" FontSize="14" />
+
+        <Border Grid.Row="1" BorderThickness="1" CornerRadius="4"
+                BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}">
+            <TreeView x:Name="FolderTree"
+                      BorderThickness="0" Padding="4"
+                      SelectedItemChanged="FolderTree_SelectedItemChanged">
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                        <Setter Property="IsExpanded" Value="True" />
+                        <Setter Property="Padding" Value="4,2" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="{Binding IconKind}" VerticalAlignment="Center"
+                                                     Margin="0,0,6,0" Width="18" Height="18" />
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Cancel" Click="Cancel_Click"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Margin="0,0,8,0" Height="32" />
+            <Button x:Name="MoveButton" Content="Move" Click="OK_Click"
+                    Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                    IsEnabled="False" Height="32" />
+        </StackPanel>
+    </Grid>
+</Window>

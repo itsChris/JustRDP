@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using JustRDP.Application.Services;
 using JustRDP.Domain.Entities;
 using JustRDP.Domain.Enums;
+using JustRDP.Presentation.Behaviors;
 
 namespace JustRDP.Presentation.ViewModels;
 
@@ -283,9 +284,35 @@ public partial class TreeViewModel : ObservableObject
         }
     }
 
-    public async Task MoveEntryAsync(TreeEntryViewModel entry, Guid? newParentId, int insertIndex)
+    public async Task MoveEntryToPositionAsync(TreeEntryViewModel entry, TreeEntryViewModel? target, DropPosition position)
     {
-        // Remove from old parent
+        Guid? newParentId;
+        if (target is null)
+            newParentId = null;
+        else if (position == DropPosition.Into)
+            newParentId = target.Id;
+        else
+            newParentId = target.ParentId;
+
+        await MoveEntryInternalAsync(entry, newParentId, () =>
+        {
+            if (target is null || position == DropPosition.Into)
+                return GetSiblings(newParentId).Count; // append at end
+
+            var siblings = GetSiblings(newParentId);
+            var targetIndex = siblings.IndexOf(target);
+            if (targetIndex < 0) return siblings.Count;
+            return position == DropPosition.Before ? targetIndex : targetIndex + 1;
+        });
+    }
+
+    public async Task MoveEntryToFolderAsync(TreeEntryViewModel entry, Guid? folderId)
+    {
+        await MoveEntryInternalAsync(entry, folderId, () => GetSiblings(folderId).Count);
+    }
+
+    private async Task MoveEntryInternalAsync(TreeEntryViewModel entry, Guid? newParentId, Func<int> getInsertIndex)
+    {
         var oldParentId = entry.ParentId;
         RemoveFromTree(entry);
 
@@ -301,10 +328,10 @@ public partial class TreeViewModel : ObservableObject
         entry.ParentId = newParentId;
         entry.Entity.ParentId = newParentId;
 
-        // Insert at specific position in new parent
+        // Insert at calculated position (computed AFTER removal so indices are correct)
         var newSiblings = GetSiblings(newParentId);
-        var clampedIndex = Math.Min(insertIndex, newSiblings.Count);
-        newSiblings.Insert(clampedIndex, entry);
+        var insertIndex = Math.Min(getInsertIndex(), newSiblings.Count);
+        newSiblings.Insert(insertIndex, entry);
 
         if (newParentId.HasValue)
         {
@@ -319,6 +346,8 @@ public partial class TreeViewModel : ObservableObject
         // Persist
         await _treeService.UpdateAsync(entry.Entity);
         await _treeService.UpdateSortOrderAsync(newSiblings.Where(s => !s.IsDashboard).Select((s, i) => (s.Id, i)).ToList());
+
+        SyncFilteredEntries();
     }
 
     private static void UpdateSortOrdersInMemory(ObservableCollection<TreeEntryViewModel> siblings)
