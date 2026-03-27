@@ -23,7 +23,7 @@ public partial class TreeViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasEntries))]
     private int _entryCount;
 
-    public bool HasEntries => EntryCount > 0;
+    public bool HasEntries => EntryCount > 0 || DashboardNode is not null;
 
     public TreeEntryViewModel? DashboardNode { get; private set; }
     public ObservableCollection<TreeEntryViewModel> RootEntries { get; } = [];
