@@ -343,7 +343,7 @@ public TreeEntryViewModel(string name, bool isDashboard)
     Name = name;
     ParentId = null;
     SortOrder = -1;             // sorts before all real entries
-    EntryType = TreeEntryType.Folder;  // treated as folder type for icon converter
+    EntryType = TreeEntryType.Dashboard;  // dedicated enum value — prevents folder-like behavior (BUG-013 fix)
     ConnectionType = null;
 }
 ```

@@ -56,10 +56,12 @@ public partial class App : System.Windows.Application
                 // ViewModels
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<NetworkScanViewModel>();
+                services.AddTransient<ImportDialogViewModel>();
 
                 // Views
                 services.AddTransient<MainWindow>();
                 services.AddTransient<NetworkScanWindow>();
+                services.AddTransient<ImportDialog>();
             })
             .Build();
     }

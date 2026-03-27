@@ -1,0 +1,182 @@
+<Window x:Class="JustRDP.Presentation.Views.ImportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:vm="clr-namespace:JustRDP.Presentation.ViewModels"
+        xmlns:converters="clr-namespace:JustRDP.Presentation.Converters"
+        Title="Import Connections"
+        Height="600" Width="800"
+        MinHeight="450" MinWidth="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource MaterialDesign.Brush.Background}"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        TextElement.FontWeight="Regular"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        d:DataContext="{d:DesignInstance vm:ImportDialogViewModel}"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <converters:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Tab Control -->
+        <TabControl Grid.Row="0" SelectedIndex="{Binding SelectedTabIndex}" Margin="0,0,0,12"
+                    Style="{StaticResource MaterialDesignFilledTabControl}">
+
+            <!-- From File Tab -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileDocument" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBlock Text="From File" VerticalAlignment="Center" />
+                    </StackPanel>
+                </TabItem.Header>
+                <StackPanel Margin="16">
+                    <TextBlock Text="Import connections from .rdp or .json files" Opacity="0.7" Margin="0,0,0,12" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Browse..." Command="{Binding BrowseFilesCommand}"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Padding="16,4">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="FolderOpen" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                        <TextBlock Text="Browse..." VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                        </Button>
+                        <TextBlock Text="{Binding SelectedFilesText}" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.7" />
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
+            <!-- From Windows Tab -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="MicrosoftWindows" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBlock Text="From Windows (mstsc.exe)" VerticalAlignment="Center" />
+                    </StackPanel>
+                </TabItem.Header>
+                <StackPanel Margin="16">
+                    <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,12"
+                               Text="Recent RDP connections from Windows Remote Desktop Client (mstsc.exe). These are read from the Windows Registry." />
+                    <Button Content="Refresh" Command="{Binding LoadWindowsEntriesCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Padding="12,2" HorizontalAlignment="Left">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                    <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <!-- Results Header -->
+        <DockPanel Grid.Row="1" Margin="0,0,0,4">
+            <Button DockPanel.Dock="Right" Content="Select All New"
+                    Command="{Binding SelectAllNewCommand}"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Padding="8,2" Height="28"
+                    Visibility="{Binding HasNewItems, Converter={StaticResource BoolToVis}}" />
+            <TextBlock Text="{Binding ResultsHeader}" FontSize="14" FontWeight="Medium"
+                       VerticalAlignment="Center" />
+        </DockPanel>
+
+        <!-- Preview DataGrid -->
+        <Grid Grid.Row="2">
+            <!-- Placeholder when no items -->
+            <TextBlock Text="Select a source above to preview connections"
+                       Opacity="0.4" FontSize="14"
+                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                       Visibility="{Binding HasItems, Converter={StaticResource InverseBoolToVis}}" />
+
+            <DataGrid ItemsSource="{Binding PreviewItems}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False" CanUserDeleteRows="False"
+                      IsReadOnly="False"
+                      SelectionMode="Single"
+                      CanUserSortColumns="True"
+                      HeadersVisibility="Column"
+                      RowHeaderWidth="0"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="1"
+                      BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"
+                      Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ExistsInDatabase}" Value="True">
+                                <Setter Property="Background" Value="#224CAF50" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ExistsInDatabase}" Value="False">
+                                <Setter Property="Background" Value="#222196F3" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="" Width="40" CanUserSort="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}"
+                                          IsEnabled="{Binding CanCheck}"
+                                          Visibility="{Binding CanCheck, Converter={StaticResource BoolToVis}}"
+                                          HorizontalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Host" Binding="{Binding HostName}" Width="160" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="70" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Username" Binding="{Binding UsernameDisplay}" Width="*" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Protocol" Binding="{Binding ProtocolDisplay}" Width="80" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="70" IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <!-- Bottom Bar: Folder selection + Import -->
+        <Grid Grid.Row="3" Margin="0,8,0,0"
+              Visibility="{Binding HasNewItems, Converter={StaticResource BoolToVis}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="Import to:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding TargetFolders}"
+                      SelectedItem="{Binding SelectedFolder}"
+                      MinWidth="180" MaxWidth="300"
+                      materialDesign:HintAssist.IsFloating="False"
+                      VerticalAlignment="Center" />
+            <Button Grid.Column="2" Command="{Binding ImportSelectedCommand}"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Padding="16,4" Margin="8,0,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Import" VerticalAlignment="Center" Margin="0,0,4,0" />
+                    <TextBlock VerticalAlignment="Center">
+                        <Run Text="Import Selected (" /><Run Text="{Binding SelectedCount, Mode=OneWay}" /><Run Text=")" />
+                    </TextBlock>
+                </StackPanel>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

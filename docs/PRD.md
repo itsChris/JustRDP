@@ -224,10 +224,14 @@ Algorithm in `CredentialInheritanceService.ResolveCredentialAsync()`:
 ### 5.5 Import/Export
 
 #### 5.5.1 Import
-- File dialog with filter: JSON (*.json) and RDP (*.rdp) files
-- Multi-select supported for batch import
+- Toolbar "Import" button opens a tabbed Import Dialog (non-modal, single-instance)
+- **"From File" tab**: Browse for JSON (*.json) and RDP (*.rdp) files with multi-select, preview before import
+- **"From Windows (mstsc.exe)" tab**: Auto-reads recent RDP connections from Windows Registry (`HKCU\Software\Microsoft\Terminal Server Client\Default` MRU values + `Servers\<host>\UsernameHint`)
+- Preview list shows all entries with existing-host detection (green "Exists" / blue "New"), same pattern as Network Scan
+- User selects target folder and imports selected entries
 - **.rdp files**: Parse `key:type:value` format → create ConnectionEntry with parsed settings
 - **JSON files**: Recursive tree structure → create FolderEntry/ConnectionEntry hierarchy
+- **Registry entries**: Create ConnectionEntry with hostname, port, and credentials from registry
 - Passwords are NOT imported (security)
 - Tree reloads after import
 

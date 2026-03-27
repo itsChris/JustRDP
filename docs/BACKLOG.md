@@ -1,5 +1,17 @@
 # Backlog
 
+## BUG-013: FK constraint crash on fresh install when creating folders/connections (FIXED)
+
+**Severity:** Critical
+**Introduced in:** FEAT-113 (Dashboard)
+**Status:** Fixed (2026-03-27)
+
+On a fresh install (no existing database), creating a folder or connection crashes with `SQLite Error 19: FOREIGN KEY constraint failed`. The Dashboard node was created with `EntryType = TreeEntryType.Folder` and `Id = Guid.Empty`. Since the Dashboard is selected by default on startup, `AddFolder`/`AddConnection` detected it as a folder and passed `Guid.Empty` as `parentId`, which doesn't exist in the database.
+
+**Fix:** Added `Dashboard` value to `TreeEntryType` enum and changed the Dashboard constructor to use `TreeEntryType.Dashboard` instead of `TreeEntryType.Folder`. The Dashboard node no longer matches `IsFolder` checks, so `AddFolder`/`AddConnection` fall through to `ParentId` (null), correctly creating entries at root level.
+
+---
+
 ## BUG-012: Dashboard hides open tabs with no way to return (FIXED)
 
 **Severity:** High

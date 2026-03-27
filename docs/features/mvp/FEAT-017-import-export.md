@@ -172,12 +172,28 @@ Enables data portability by allowing users to import connections from standard .
 ### 7.1 Key Files
 - `Infrastructure/Import/RdpFileParser.cs` — .rdp parser
 - `Infrastructure/Import/JsonTreeImporter.cs` — JSON importer
+- `Infrastructure/Import/MstscRegistryReader.cs` — Windows mstsc.exe registry reader
 - `Infrastructure/Export/RdpFileExporter.cs` — .rdp exporter
 - `Infrastructure/Export/JsonTreeExporter.cs` — JSON exporter
 - `Application/Services/ImportExportService.cs` — Orchestration
+- `Presentation/ViewModels/ImportDialogViewModel.cs` — Import dialog ViewModel
+- `Presentation/Views/ImportDialog.xaml(.cs)` — Import dialog Window
 
 ---
 
-## 8. References
+## 8. Enhancements (2026-03-27)
+
+### Import Dialog
+Replaced the direct file-open dialog with a tabbed Import Dialog window:
+- **"From File" tab**: Browse button opens file dialog (JSON/RDP multi-select), parsed entries shown in preview DataGrid with existing-host detection before import
+- **"From Windows (mstsc.exe)" tab**: Auto-reads recent RDP connections from Windows Registry (`HKCU\Software\Microsoft\Terminal Server Client\Default` MRU entries + `Servers\<host>\UsernameHint` for usernames). DOMAIN\user format is parsed.
+- Shared bottom bar: target folder dropdown + "Import Selected (N)" button
+- Same green "Exists" / blue "New" host detection pattern as Network Scan (FEAT-109)
+- "Select All New" button and bottom bar hidden when no new entries available
+- `MstscRegistryReader` (Infrastructure) reads registry; `ImportDialogViewModel` (Presentation) handles preview, selection, and import
+
+---
+
+## 9. References
 - §5.5: Import/Export — Full specification
 - §5.5.3: .rdp File Format Support — Key listing

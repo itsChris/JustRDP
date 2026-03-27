@@ -27,6 +27,8 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly AvailabilityMonitorService _availabilityMonitor;
     private NetworkScanWindow? _scanWindow;
     private IServiceScope? _scanScope;
+    private Views.ImportDialog? _importWindow;
+    private IServiceScope? _importScope;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoTabs))]
@@ -461,37 +463,32 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task Import()
+    private void Import()
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog
+        if (_importWindow is not null && _importWindow.IsLoaded)
         {
-            Title = "Import Connections",
-            Filter = "All Supported|*.json;*.rdp|JSON Files|*.json|RDP Files|*.rdp",
-            Multiselect = true
-        };
-
-        if (dialog.ShowDialog() != true) return;
-
-        _logger.LogInformation("Importing {Count} file(s)", dialog.FileNames.Length);
-        foreach (var file in dialog.FileNames)
-        {
-            var ext = System.IO.Path.GetExtension(file).ToLowerInvariant();
-            if (ext == ".rdp")
-            {
-                var entry = Infrastructure.Import.RdpFileParser.Parse(file);
-                await _importExportService.ImportEntriesAsync([entry]);
-            }
-            else if (ext == ".json")
-            {
-                var entries = Infrastructure.Import.JsonTreeImporter.Import(file);
-                await _importExportService.ImportEntriesAsync(entries);
-            }
+            _importWindow.Activate();
+            return;
         }
 
-        await TreeVM.LoadTreeAsync();
-        UpdateStatus();
-        RefreshDashboard();
-        StatusText = $"Imported {dialog.FileNames.Length} file(s)";
+        _importScope = _serviceProvider.CreateScope();
+        _importWindow = _importScope.ServiceProvider.GetRequiredService<Views.ImportDialog>();
+
+        var importVm = (ImportDialogViewModel)_importWindow.DataContext;
+        importVm.ImportCompleted += async () =>
+        {
+            await TreeVM.LoadTreeAsync();
+            UpdateStatus();
+            RefreshDashboard();
+        };
+
+        _importWindow.Closed += (_, _) =>
+        {
+            _importWindow = null;
+            _importScope?.Dispose();
+            _importScope = null;
+        };
+        _importWindow.Show();
     }
 
     [RelayCommand]

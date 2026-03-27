@@ -19,4 +19,13 @@ if ($LASTEXITCODE -ne 0) { Write-Host "Publish failed." -ForegroundColor Red; ex
 
 Write-Host ""
 Write-Host "Published to $OutputDir" -ForegroundColor Green
+
+# Zip with timestamp
+$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$zipName = "JustRDP-$timestamp.zip"
+$zipPath = Join-Path $ProjectRoot "build\$zipName"
+
+Write-Host "Creating $zipName..." -ForegroundColor Yellow
+Compress-Archive -Path "$OutputDir\*" -DestinationPath $zipPath -Force
+Write-Host "Zipped to $zipPath" -ForegroundColor Green
 Write-Host "No .NET runtime required on target machine." -ForegroundColor Cyan

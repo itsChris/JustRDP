@@ -15,7 +15,7 @@ A lightweight WPF-based remote connection manager for Windows. Organize RDP and 
 - **DPAPI-encrypted passwords** — credentials are encrypted with Windows DPAPI (per-user scope), no external key management needed
 - **Availability monitor** — toggle a background monitor that periodically pings all connections (ICMP + TCP fallback) and shows green/red indicators in the tree; status bar displays an availability summary (e.g. "12/18 available"); pauses automatically when minimized; persisted across sessions
 - **Network scan** — scan a CIDR range for RDP-enabled hosts, view results with existing-host detection, and selectively import discovered hosts into the tree
-- **Import / Export** — import and export connections as JSON or standard `.rdp` files compatible with mstsc.exe
+- **Import / Export** — import connections from JSON, `.rdp` files, or directly from Windows mstsc.exe recent connections (registry); export as JSON
 - **Dark / Light theme** — toggle between themes with automatic persistence
 - **Keyboard shortcuts** — Ctrl+N (new connection), Ctrl+Shift+N (new folder), F2 (rename), Delete, Ctrl+W (close tab)
 - **Persistent layout** — window position, size, state, and panel widths are remembered across sessions
@@ -77,6 +77,16 @@ Or directly:
 ```powershell
 dotnet run --project src/JustRDP.Presentation
 ```
+
+### Self-Contained Publish
+
+To deploy without requiring .NET 10 on the target machine:
+
+```powershell
+.\publish-selfcontained.ps1   # Publish + zip to build\JustRDP-<timestamp>.zip
+```
+
+Output includes all .NET runtime dependencies. Copy the zip to the target PC and extract — no install needed.
 
 The database is created automatically on first launch at `%LOCALAPPDATA%\JustRDP\justrdp.db`.
 
