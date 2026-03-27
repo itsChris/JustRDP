@@ -4,6 +4,7 @@ param(
 
     [switch]$Clean,
     [switch]$Publish,
+    [switch]$SelfContained,
     [switch]$Run
 )
 
@@ -45,7 +46,12 @@ Write-Host ""
 # Publish
 if ($Publish) {
     Write-Host "Publishing to $OutputDir..." -ForegroundColor Yellow
-    dotnet publish $EntryProject -c $Configuration -o $OutputDir --no-build --nologo
+    if ($SelfContained) {
+        Write-Host "Mode: self-contained (no .NET runtime required on target)" -ForegroundColor Cyan
+        dotnet publish $EntryProject -c $Configuration -o $OutputDir --self-contained -r win-x64 --nologo
+    } else {
+        dotnet publish $EntryProject -c $Configuration -o $OutputDir --no-build --nologo
+    }
     if ($LASTEXITCODE -ne 0) { Write-Host "Publish failed." -ForegroundColor Red; exit 1 }
     Write-Host "Published to $OutputDir" -ForegroundColor Green
     Write-Host ""

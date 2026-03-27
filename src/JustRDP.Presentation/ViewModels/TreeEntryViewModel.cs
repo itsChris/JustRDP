@@ -82,7 +82,7 @@ public partial class TreeEntryViewModel : ObservableObject
         Name = name;
         ParentId = null;
         SortOrder = -1;
-        EntryType = TreeEntryType.Folder;
+        EntryType = TreeEntryType.Dashboard;
         ConnectionType = null;
     }
 
